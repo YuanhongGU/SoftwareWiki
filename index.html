@@ -1,0 +1,2147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Software Wiki</title>
+  <style>
+    :root {
+      --mosaic-pink: #e84d85;
+      --mosaic-purple: #9b6ca8;
+      --mosaic-lime: #c6da58;
+      --mosaic-blue: #24b8ec;
+      --mosaic-orange: #ee7954;
+
+      --mosaic-bg: #000;
+      --mosaic-text: #f3f4f6;
+      --mosaic-muted: #9ca3af;
+
+      --mosaic-gradient: linear-gradient(135deg,
+          #e84d85 0%, #9b6ca8 25%, #24b8ec 50%, #c6da58 75%, #ee7954 100%);
+
+      --nav-height: 72px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--mosaic-bg);
+      color: var(--mosaic-text);
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      padding-top: var(--nav-height);
+    }
+
+    /* Navigation shell. The bar itself is transparent. */
+    .custom-navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1030;
+      padding: 0.6rem 20px;
+      background: transparent;
+      transition: transform 0.3s ease, padding 0.3s ease;
+    }
+
+    .custom-navbar.navbar-hide {
+      transform: translateY(-100%);
+    }
+
+    .nav-shell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    /* Brand on the left side of the bar. */
+    .brand-pill {
+      margin-right: auto;
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      font-weight: 700;
+      font-size: 1.35rem;
+      color: rgba(255, 255, 255, 0.88);
+      white-space: nowrap;
+    }
+
+    /* Glass capsule that holds the menu. */
+    .menu-pill {
+      position: relative;
+      isolation: isolate;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      max-width: 100%;
+      min-width: 0;
+
+      background: rgba(255, 255, 255, 0.015);
+      backdrop-filter: blur(4px) saturate(160%);
+      -webkit-backdrop-filter: blur(4px) saturate(160%);
+
+      box-shadow:
+        0 10px 30px -5px rgba(0, 0, 0, 0.3),
+        inset 0 2px 2px 0 rgba(255, 255, 255, 0.8),
+        inset 0 -2px 4px 0 rgba(0, 0, 0, 0.15),
+        inset 2px 0 4px 0 rgba(255, 255, 255, 0.1),
+        inset -2px 0 4px 0 rgba(255, 255, 255, 0.1);
+
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .menu-pill::before {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      z-index: 0;
+      border-radius: inherit;
+      background: linear-gradient(135deg,
+          rgba(255, 255, 255, 0.15) 0%,
+          rgba(255, 255, 255, 0.0) 40%,
+          rgba(255, 255, 255, 0.0) 60%,
+          rgba(255, 255, 255, 0.05) 100%);
+      pointer-events: none;
+    }
+
+    .menu-pill::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      border-radius: inherit;
+      padding: 2px;
+      background: var(--mosaic-gradient);
+      -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    }
+
+    .menu-pill:hover {
+      border-color: rgba(155, 108, 168, 0.45);
+      background: rgba(255, 255, 255, 0.03);
+      box-shadow:
+        0 14px 40px -5px rgba(0, 0, 0, 0.4),
+        inset 0 2px 3px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -2px 5px 0 rgba(0, 0, 0, 0.2),
+        inset 2px 0 6px 0 rgba(255, 255, 255, 0.2),
+        inset -2px 0 6px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .menu-pill:hover::after {
+      opacity: 1;
+    }
+
+    .menu-pill>* {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Horizontal menu row. */
+    .menu-nav {
+      display: flex;
+      align-items: center;
+      gap: clamp(14px, 1.8vw, 28px);
+    }
+
+    .menu-nav .nav-item {
+      position: relative;
+    }
+
+    .menu-nav .nav-item+.nav-item::before {
+      content: "";
+      position: absolute;
+      left: calc(clamp(14px, 1.8vw, 28px) / -2);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .nav-link {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 1rem;
+      padding: 6px 2px;
+      text-decoration: none;
+      transition: color 0.25s ease;
+    }
+
+    .nav-icon {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+    }
+
+    /* One brand color per menu item. */
+    .nav-c-pink {
+      color: var(--mosaic-pink);
+    }
+
+    .nav-c-purple {
+      color: var(--mosaic-purple);
+    }
+
+    .nav-c-blue {
+      color: var(--mosaic-blue);
+    }
+
+    .nav-c-lime {
+      color: var(--mosaic-lime);
+    }
+
+    .nav-c-orange {
+      color: var(--mosaic-orange);
+    }
+
+    .nav-link:hover {
+      color: #fff;
+    }
+
+    .nav-link .u {
+      position: relative;
+      display: inline-block;
+    }
+
+    .nav-link .u::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0.1em;
+      width: 100%;
+      height: 2px;
+      background: var(--mosaic-gradient);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+
+    .nav-link:hover .u::after,
+    .dropdown-item:hover .u::after {
+      transform: scaleX(1);
+    }
+
+    /* Dropdown menus. */
+    .nav-item.dropdown {
+      position: relative;
+    }
+
+    .nav-item.dropdown:hover,
+    .nav-item.dropdown:focus-within,
+    .nav-item.dropdown.show {
+      z-index: 3;
+    }
+
+    .nav-item.dropdown:hover>.nav-link .nav-icon,
+    .nav-item.dropdown:focus-within>.nav-link .nav-icon,
+    .nav-item.dropdown.show>.nav-link .nav-icon {
+      transform: rotate(180deg);
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      z-index: 1300;
+      min-width: 12.5rem;
+      margin: 0;
+      padding: 6px 0;
+      list-style: none;
+      background: #15151a;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-6px);
+      transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+      pointer-events: none;
+    }
+
+    /* Open the right-hand items toward the left so the menu stays in the viewport. */
+    .nav-item.dropdown:not(:first-child)>.dropdown-menu {
+      left: auto;
+      right: 0;
+    }
+
+    /* Treat the gap between the trigger and the menu as part of the menu, so moving the pointer down does not close it. */
+    .dropdown-menu::before {
+      content: "";
+      position: absolute;
+      top: -12px;
+      left: -10px;
+      right: -10px;
+      height: 12px;
+    }
+
+    .dropdown-menu li {
+      position: relative;
+      margin: 0;
+      padding: 0;
+    }
+
+    .dropdown-menu li::before {
+      content: none;
+    }
+
+    .nav-item.dropdown:hover>.dropdown-menu,
+    .nav-item.dropdown:focus-within>.dropdown-menu,
+    .nav-item.dropdown.show>.dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    /* After a click, keep the menu closed until the pointer leaves, so it does not sit under the cursor after the jump. */
+    .nav-item.dropdown.is-dismissed>.dropdown-menu {
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-6px);
+      pointer-events: none;
+    }
+
+    .dropdown-item {
+      display: block;
+      padding: 0.5rem 1rem;
+      color: rgba(255, 255, 255, 0.85);
+      text-decoration: none;
+      white-space: nowrap;
+      transition: color 0.2s ease;
+    }
+
+    .dropdown-item:hover,
+    .dropdown-item:focus-visible {
+      color: #fff;
+    }
+
+    .dropdown-item .u {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-item .u::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0.1em;
+      width: 100%;
+      height: 2px;
+      background: var(--mosaic-gradient);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      .custom-navbar,
+      .menu-pill,
+      .nav-link,
+      .nav-link .u::after,
+      .dropdown-menu,
+      .dropdown-item .u::after,
+      .nav-icon {
+        transition: none;
+      }
+    }
+
+    /* Page content. */
+    .mainContent {
+      width: 100%;
+      font-size: 25px;
+      padding: 24px 32px 80px;
+      text-align: left;
+    }
+
+    .main {
+      /* Leave room for the fixed bar so an anchor jump does not hide the heading. */
+      scroll-margin-top: calc(var(--nav-height) + 16px);
+      color: var(--mosaic-text);
+    }
+
+    .main h2,
+    .main h3 {
+      scroll-margin-top: calc(var(--nav-height) + 16px);
+    }
+
+    .main h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .main code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.9em;
+      padding: 0.1em 0.35em;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--mosaic-orange);
+    }
+
+    .main .img-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      align-items: start;
+      margin: 0.6em 0 1.2em;
+    }
+
+    .main .img-item {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .main .img-item figure {
+      margin: 0;
+    }
+
+    .main .img-item img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 8px;
+    }
+
+    @media (max-width: 860px) {
+      .main .img-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .main .img-single {
+      display: flex;
+      justify-content: center;
+    }
+
+    .main .img-single img {
+      width: calc(50% - 8px);
+      border-radius: 8px;
+    }
+
+    p {
+      margin: 0 0 1em 0;
+    }
+
+    ol {
+      padding-left: 1.5em;
+      margin-left: 1em;
+    }
+
+    ul {
+      list-style: none;
+      padding-left: 0;
+      margin-left: 1em;
+    }
+
+    ul li {
+      position: relative;
+      padding-left: 1.2em;
+    }
+
+    ul li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.45em;
+      width: 0.5em;
+      height: 0.5em;
+    }
+
+    #OCRP h2 {
+      border-left: 4px solid var(--mosaic-pink);
+      padding-left: 14px;
+    }
+
+    #Hardware h2 {
+      border-left: 4px solid var(--mosaic-blue);
+      padding-left: 14px;
+    }
+
+    #iHP h2 {
+      border-left: 4px solid var(--mosaic-lime);
+      padding-left: 14px;
+    }
+
+    #OCRP h3 {
+      width: fit-content;
+      border-bottom: 1px solid var(--mosaic-pink);
+      padding-left: .5em;
+      padding-right: .5em;
+      margin-bottom: 0.5em;
+    }
+
+    #Hardware h3 {
+      width: fit-content;
+      border-bottom: 1px solid var(--mosaic-blue);
+      padding-left: .5em;
+      padding-right: .5em;
+      margin-bottom: 0.5em;
+    }
+
+    #iHP h3 {
+      width: fit-content;
+      border-bottom: 1px solid var(--mosaic-lime);
+      padding-left: .5em;
+      padding-right: .5em;
+      margin-bottom: 0.5em;
+    }
+
+    #OCRP ul li::before {
+      background: var(--mosaic-pink);
+    }
+
+    #Hardware ul li::before {
+      background: var(--mosaic-blue);
+    }
+
+    #iHP ul li::before {
+      background: var(--mosaic-lime);
+    }
+
+    #OCRP ol li::marker {
+      color: var(--mosaic-pink);
+    }
+
+    #Hardware ol li::marker {
+      color: var(--mosaic-blue);
+    }
+
+    #iHP ol li::marker {
+      color: var(--mosaic-lime);
+    }
+
+    #OCRP b {
+      color: var(--mosaic-pink);
+    }
+
+    #Hardware b {
+      color: var(--mosaic-blue);
+    }
+
+    #iHP b {
+      color: var(--mosaic-lime);
+    }
+
+    .main .body {
+      font-size: 1rem;
+      line-height: 1.8;
+      /*color: rgba(243, 244, 246, 0.72);*/
+    }
+
+    .main .body>img,
+    .main .body>figure {
+      display: block;
+      width: min(100%, 960px);
+      height: auto;
+      margin: 1.2em auto 1.6em;
+    }
+
+    .main .body>figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0;
+      border-radius: 8px;
+    }
+
+    .main figcaption {
+      margin: 0.55em 0 0;
+      font-size: 0.92rem;
+      line-height: 1.55;
+      color: rgba(243, 244, 246, 0.82);
+    }
+
+    .cycle-cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 0.2em 0 1.4em;
+    }
+
+    .cycle-cards article {
+      margin: 0;
+      padding: 0.85em 1em 1em;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .cycle-cards h4 {
+      margin: 0 0 0.35em;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .cycle-cards p:last-child {
+      margin-bottom: 0;
+    }
+
+    @media (max-width: 860px) {
+      .cycle-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .pkg-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.2em 0;
+      font-size: 0.95rem;
+      color: rgba(243, 244, 246, 0.82);
+    }
+
+    .pkg-table th,
+    .pkg-table td {
+      padding: 0.6em 0.9em;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .pkg-table thead th {
+      font-weight: 700;
+      color: var(--mosaic-text);
+    }
+
+    .pkg-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    #OCRP .pkg-table thead th {
+      border-bottom: 1px solid var(--mosaic-pink);
+    }
+
+    #Hardware .pkg-table thead th {
+      border-bottom: 1px solid var(--mosaic-blue);
+    }
+
+    #iHP .pkg-table thead th {
+      border-bottom: 1px solid var(--mosaic-lime);
+    }
+
+    .fit-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.2em 0;
+      font-size: 0.95rem;
+      color: rgba(243, 244, 246, 0.82);
+    }
+
+    .fit-table th,
+    .fit-table td {
+      padding: 0.5em 0.8em;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      vertical-align: top;
+    }
+
+    .fit-table thead th {
+      font-weight: 700;
+      color: var(--mosaic-text);
+    }
+
+    .fit-table .num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .fit-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    #OCRP .fit-table thead th {
+      border-bottom: 1px solid var(--mosaic-pink);
+    }
+
+    #Hardware .fit-table thead th {
+      border-bottom: 1px solid var(--mosaic-blue);
+    }
+
+    #iHP .fit-table thead th {
+      border-bottom: 1px solid var(--mosaic-lime);
+    }
+
+    code.language-text {
+      color: var(--mosaic-text);
+    }
+
+    .botBar {
+      display: flex;
+      align-items: center;
+
+      height: auto;
+
+      padding: 10px 32px;
+      margin: 10px 3px 10px 10px;
+
+      background: color-mix(in srgb, var(--mosaic-muted) 10%, transparent);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 32px;
+      box-shadow: 0 25px 45px -12px rgba(0, 20, 50, 0.25),
+        0 2px 8px 0 rgb(255 255 255 / 0.12) inset;
+      transition: all 0.2s ease;
+
+      color: var(--mosaic-muted);
+    }
+  </style>
+
+  <!-- code -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/github-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
+
+  <!-- LaTex -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {
+    delimiters: [
+      {left: '$$', right: '$$', display: true},
+      {left: '$',  right: '$',  display: false},
+      {left: '\\[', right: '\\]', display: true},
+      {left: '\\(', right: '\\)', display: false}
+    ],
+    throwOnError: false
+  });"></script>
+</head>
+
+<body>
+
+  <header class="custom-navbar" id="nav">
+    <div class="nav-shell">
+      <div class="brand-pill">Software Wiki</div>
+
+      <div class="menu-pill">
+        <nav class="menu-nav" aria-label="Page sections">
+          <div class="nav-item dropdown">
+            <a href="#OCRP" class="nav-link nav-c-pink" id="nav-ocrp" aria-haspopup="true" aria-expanded="false">
+              <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 6l4 4 4-4" />
+              </svg>
+              <span class="u">ML4OCRP</span>
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="nav-ocrp">
+              <li><a class="dropdown-item" href="#ocrp-abstract"><span class="u">Abstract</span></a></li>
+              <li><a class="dropdown-item" href="#ocrp-why"><span class="u">Why OCRP</span></a></li>
+              <li><a class="dropdown-item" href="#ocrp-iteration"><span class="u">Optimization iteration</span></a></li>
+              <li><a class="dropdown-item" href="#ocrp-learn"><span class="u">Learn more</span></a></li>
+              <li><a class="dropdown-item" href="#ocrp-workflow"><span class="u">Workflow</span></a></li>
+              <li><a class="dropdown-item" href="#ocrp-score-shapes"><span class="u">Score shapes</span></a></li>
+              <li><a class="dropdown-item" href="#ocrp-architecture"><span class="u">Architecture</span></a></li>
+              <li><a class="dropdown-item" href="#ocrp-dependencies"><span class="u">Dependencies</span></a></li>
+              <li><a class="dropdown-item" href="#ocrp-usage"><span class="u">How to use it</span></a></li>
+              <li><a class="dropdown-item" href="#ocrp-gui"><span class="u">GUI: WebOcrp</span></a></li>
+            </ul>
+          </div>
+          <div class="nav-item dropdown">
+            <a href="#Hardware" class="nav-link nav-c-blue" id="nav-hardware" aria-haspopup="true"
+              aria-expanded="false">
+              <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 6l4 4 4-4" />
+              </svg>
+              <span class="u">Collab with Hardware</span>
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="nav-hardware">
+              <li><a class="dropdown-item" href="#hw-abstract"><span class="u">Abstract</span></a></li>
+              <li><a class="dropdown-item" href="#hw-why"><span class="u">Why this pipeline</span></a></li>
+              <li><a class="dropdown-item" href="#hw-iteration"><span class="u">Optimization iteration</span></a></li>
+              <li><a class="dropdown-item" href="#hw-workflow"><span class="u">Workflow and architecture</span></a></li>
+              <li><a class="dropdown-item" href="#hw-dependencies"><span class="u">Dependencies</span></a></li>
+              <li><a class="dropdown-item" href="#hw-output"><span class="u">Raw output</span></a></li>
+              <li><a class="dropdown-item" href="#hw-fit"><span class="u">Reading the fit</span></a></li>
+              <li><a class="dropdown-item" href="#hw-figure"><span class="u">Reading the figure</span></a></li>
+            </ul>
+          </div>
+          <div class="nav-item dropdown">
+            <a href="#iHP" class="nav-link nav-c-lime" id="nav-ihp" aria-haspopup="true" aria-expanded="false">
+              <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 6l4 4 4-4" />
+              </svg>
+              <span class="u">Collab with iHP</span>
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="nav-ihp">
+              <li><a class="dropdown-item" href="#ihp-why"><span class="u">Why Desktiny</span></a></li>
+              <li><a class="dropdown-item" href="#ihp-play"><span class="u">How to play</span></a></li>
+            </ul>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <div class="mainContent" id="mainContent">
+    <div class="main" id="OCRP">
+      <h2>ML4OCRP</h2>
+      <h3 id="ocrp-abstract">Abstract</h3>
+      <div class="body">
+        <p>
+          Machine Learning for Optimal Cell Ratio Prediction (ML4OCRP) recommends a cell ratio for a stochastic
+          differentiation system and tells each cell group when that ratio is expected.
+          The attainable ratios form a small discrete set, treated here as ten.
+          Measuring every candidate is expensive, and each cell group is observed as a short, noisy trajectory rather
+          than a single number.
+          ML4OCRP fits the ratio–score relationship that has already been measured, proposes a globally preferred ratio,
+          and uses predictive uncertainty to choose the next ratio worth sampling.
+        </p>
+      </div>
+      <br>
+      <h3 id="ocrp-why">Why OCRP</h3>
+      <div class="body">
+        <p>
+          The project provides a protocol for measuring several ratios.
+          What it returns is still a small set of discrete ratio–score pairs, so those measurements alone do not show
+          when the best score is reached.
+          ML4OCRP is the software for that gap.
+          It takes the discrete ratio–score data produced by the project method and predicts the global optimum.
+        </p>
+        <figure>
+          <img src="figures/fig-01-project-cycle.png"
+            alt="Six boxes in a loop around the title Programmable Cell Proportions: wet-lab design, build and induce, hardware measurement, dry-lab analysis, score and select, and validate and refine">
+          <figcaption><b>Figure 1.</b> ML4OCRP sits in steps 4 and 5: it turns a measured ratio into a score and chooses the next ratio to sample. The measurement that feeds those steps is step 3. See our Measurement page. See our Hardware page.</figcaption>
+        </figure>
+        <p>
+          Hovering a box in Figure 1 opens the matching card.
+          A touch screen should open the same card on tap, because that screen has no hover.
+        </p>
+        <div class="cycle-cards">
+          <article>
+            <h4>1. Wet Lab Design</h4>
+            <p>
+              This step chooses the circuit, the plasmid, and the induction plan that are meant to produce the two cell states.
+              The software does not design that DNA.
+              It only needs the plan to name ratios a construct can be asked to reach.
+              The ten ratios used later, spaced from 0.5 to 6, are that list.
+            </p>
+            <p>
+              <b>Picture to draw.</b>
+              Three rows on one card: a cassette labeled promoter, BxB1, and two state markers; a plasmid drawn as a circle with those same labels and no sequence; a table headed inducer, dose, time, and intended ratio.
+              Fill only the ratio column, from 0.5 to 6, and leave the other cells blank.
+              Alt: a circuit cassette, a labeled plasmid circle, and an induction table whose ratio column runs from 0.5 to 6.
+              No gel, no sequence, and no part number, because this page does not have them.
+            </p>
+          </article>
+          <article>
+            <h4>2. Build &amp; Induce</h4>
+            <p>
+              A built and induced culture is one cell group.
+              What gets recorded is a short, noisy trajectory of ratio against time, not one final number.
+              The check on this page uses 40 groups, and the ratio at 24 h lies near one of the ten targets.
+            </p>
+            <p>
+              <b>Picture.</b>
+              Use Figure 3.
+              It is already the drawing of this step: one point per group, gray lines at the ten targets.
+              A photograph of a flask would not show the ratio.
+            </p>
+          </article>
+          <article>
+            <h4>3. Hardware Measurement</h4>
+            <p>
+              Something has to turn a physical signal into a ratio.
+              The box names a plate reader, imaging, and flow cytometry as the planned readers.
+              See our Measurement page.
+              The analysis written here is the pigment-mixing test: phyphox Hue and Saturation, rescaled by that batch's pure yellow and pure blue, then read as a blue volume fraction by one logistic.
+              See our Hardware page.
+            </p>
+            <p>
+              <b>Picture.</b>
+              Use Figure 16.
+              Do not draw a cytometer or a plate reader until those recordings exist.
+            </p>
+          </article>
+          <article>
+            <h4>4. Dry Lab Analysis</h4>
+            <p>
+              Two questions are answered here, by two different tools.
+              The modeling group derived the BxB1 recombination equation.
+              The time query fits that equation, then a residual, and asks when a cell group reaches the target ratio.
+              ML4OCRP learns only score against ratio, and returns a predicted score together with an uncertainty.
+              One network was tried on both jobs. It did not learn either well, so the jobs stayed separate.
+            </p>
+            <p>
+              <b>Picture.</b>
+              Use Figure 7.
+              The hover should point at the two readouts, the posterior mean and UCB, and leave the time query out of that drawing.
+            </p>
+          </article>
+          <article>
+            <h4>5. Score &amp; Select</h4>
+            <p>
+              Score is whatever the project is maximizing.
+              It can be a symmetric peak, a skewed peak, two peaks, a rising sigmoid, or a straight ramp.
+              The posterior mean names the ratio with the highest predicted score.
+              UCB, the mean plus β times the standard deviation with β = 2, names the next ratio to measure.
+              In the 24 h check, the single-peak and monotonic scores land within 0.03 of the true optimum.
+              The two-peak score is the loose case: predicted ratio 3.73, true peak 4.00, regret 0.21.
+            </p>
+            <p>
+              <b>Picture.</b>
+              Use Figure 5 for the five fits, and Figure 6 if the card has room for the error summary.
+              Both drawings already exist. A new chart would only repeat them.
+            </p>
+          </article>
+          <article>
+            <h4>6. Validate &amp; Refine</h4>
+            <p>
+              The ratio from step 5 is the next experiment, sent back to the wet lab as another induction or another group to build.
+              A loose result, such as the two-peak score, says where to measure next.
+              This page stops before that round. There is no second data set here.
+            </p>
+            <p>
+              <b>Picture to draw.</b>
+              A reduced loop: the score-and-select box hands one number, the UCB ratio, to the wet-lab box, and the wet-lab box stays empty.
+              Alt: an arrow from the score-and-select box to the wet-lab box, with one ratio written on the arrow.
+              No colonies and no before-and-after plot.
+            </p>
+          </article>
+        </div>
+        <p>
+          Each cell group has an identifier.
+          Over time, it is recorded as two aligned tables: one of cell ratios (<code>id</code>, <code>time</code>,
+          <code>ratio</code>) and one of the corresponding experimental scores (<code>id</code>, <code>time</code>,
+          <code>score</code>).
+          The ratio is the relative abundance of the two differentiated cell types.
+          The score is the objective we want to maximize.
+        </p>
+        <p>
+          A lookup over the ten discrete ratios cannot say what happens between the ratios that were actually measured,
+          and it does not say which unmeasured ratio would reduce uncertainty the most.
+          The first model tried to learn both relationships in one network.
+          That did not work: the optimal ratio itself was predicted poorly, and letting the same model also account for
+          how ratio changes with time performed poorly as well.
+          Predicting the optimal ratio is the main task, so the two jobs were separated.
+        </p>
+        <ul>
+          <li>
+            <b>OCRP</b> learns score as a function of ratio only.
+            A deep-kernel Gaussian process returns both a predicted score and an uncertainty, so the same model can name
+            a predicted optimum and recommend the next experiment.
+          </li>
+          <li>
+            <b>The time query</b> is separate.
+            Given a target ratio, it asks, for each cell group, whether that ratio was already seen, will be reached
+            later, or is not reached inside the search horizon.
+            The current query fits the modeling group's BxB1 recombination ODE and a residual on top of it. Combining
+            that mechanistic model with the software was a goal from the start; this is the version that implements it.
+          </li>
+        </ul>
+      </div>
+      <br>
+      <h3 id="ocrp-iteration">Optimization iteration</h3>
+      <div class="body">
+        <ul>
+          <li>
+            <b>
+              Version 1.0
+            </b>
+            <p>
+              The first version defined the data contract and a joint model.
+              Ratio and score tables were inner-joined on <code>(id, time)</code>, grouped by cell group, and packed
+              into a padded tensor of <code>(time, ratio, score)</code>.
+              A Transformer encoder (<code>TimeAttentionEncoder</code>) compressed each variable-length trajectory into
+              one global feature, using a learnable token in the style of BERT's <code>[CLS]</code> token.
+              That feature was repeated at every time point, concatenated with the current ratio, and passed to a
+              deep-kernel Gaussian process (<code>DeepKernelGP</code>) that predicted score.
+              Upper confidence bound (UCB) on the posterior then suggested the next ratio to sample.
+              The intention was to let one model absorb both the time course of the ratio and the ratio–score map.
+            </p>
+          </li>
+          <li>
+            <b>Version 2.0</b>
+            <p>
+              The program was split into command-line modules: preprocessing, the model definition, training helpers,
+              training, ratio recommendation, and a per-group time query.
+              The split was to keep the code organized, with one responsibility per file.
+              Each job can be run with its own arguments.
+              The network was still <code>TimeAttentionEncoder</code> plus <code>DeepKernelGP</code>.
+            </p>
+            <p>
+              <code>RatioTimePredictor</code> was added because leaving time in the attention model was not working.
+              It fitted a scikit-learn Gaussian process from time to ratio for each cell group.
+              A query first looked for a historical time within a tolerance of the target ratio.
+              If none existed, it searched the predicted mean forward in time and returned the earliest crossing, or
+              reported that the ratio was not reached.
+            </p>
+          </li>
+          <li>
+            <b>Version 3.0</b>
+            <p>
+              The optimal-ratio prediction was still poor.
+              Because that prediction is the main task, OCRP was reduced to the ratio–score map.
+              <code>TimeAttentionEncoder</code> was replaced by <code>RatioFeatureEncoder</code>, which embeds a scalar
+              ratio and is pretrained with an auxiliary score head.
+              The padded trajectory tensor and the saved global feature were removed with the old encoder.
+              The time course stayed in <code>RatioTimePredictor</code>.
+            </p>
+          </li>
+          <li>
+            <b>Version 4.0 (Final version)</b>
+            <p>
+              The time query is where the mechanistic model enters the software.
+              From the beginning, the aim was to combine the modeling group's BxB1 recombination ODE with ML4OCRP; this
+              version is the one that does it.
+              For each cell group the predictor fits that ODE and then a residual Gaussian process or polynomial,
+              instead of a Gaussian process on time alone.
+            </p>
+            <p>
+              Fitting the ODE for every cell group is slow, so <code>query_per_id.py</code> leaves
+              <code>--fit_ode</code> off unless it is passed.
+              <code>Val.sh</code> passes it.
+              <code>app.py</code> calls the same <code>Model/</code> implementation.
+              The interface is there both for teammates who are not running the command line and for demonstration.
+              In the browser, the per-group query runs one group at a time so the page can show progress.
+              It does not start the process pool used by the command-line query.
+            </p>
+          </li>
+        </ul>
+      </div>
+      <br>
+      <h3 id="ocrp-learn">Learn more about ML4OCRP</h3>
+      <div class="body">
+        <p>
+          OCRP predicts the score of a ratio that may not have been measured.
+        </p>
+        <ol>
+          <li>
+            <p>
+              <b>Pretrain the encoder.</b>
+              <code>RatioFeatureEncoder</code> maps the scalar ratio through a linear layer (1 to 32), a ReLU, and a
+              linear layer (32 to 16).
+              A linear head on that 16-dimensional embedding predicts score.
+              This stage only teaches the encoder a useful representation.
+            </p>
+          </li>
+          <li>
+            <p>
+              <b>Freeze the encoder.</b>
+              The score head is not used again.
+              Each training pair becomes the 17-dimensional vector <code>[ratio | embedding]</code>.
+            </p>
+          </li>
+          <li>
+            <p>
+              <b>Fit a deep-kernel Gaussian process.</b>
+              An MLP (17 to 32, ReLU, 32 to 8) maps that vector into a latent space.
+              An exact Gaussian process with a zero mean and an automatic-relevance-determination RBF kernel lives in
+              that space, with a Gaussian observation noise.
+              Training maximizes the exact marginal likelihood.
+            </p>
+          </li>
+          <li>
+            <p>
+              <b>Read the posterior in two ways.</b>
+            </p>
+            <ul>
+              <li>
+                <p>
+                  The predicted optimum maximizes the posterior mean by multi-start gradient steps on the ratio interval
+                  <code>[0.01, 5]</code>.
+                </p>
+              </li>
+              <li>
+                <p>
+                  The next experiment maximizes UCB, <code>mean + β · std</code> with <code>β = 2</code>, on a grid over
+                  <code>[0.1, 10]</code>.
+                </p>
+              </li>
+            </ul>
+          </li>
+        </ol>
+        <p>
+          The time query does not go through this network.
+          For each cell group it fits BxB1 kinetic parameters, models the residual between the ODE and the observed
+          ratios, and searches for the time at which the predicted ratio meets the target.
+          The result is a time and a status: <code>-1</code> if the ratio was already seen in the recorded history,
+          <code>1</code> if it is predicted in the future, and <code>0</code> if it is not reached.
+        </p>
+      </div>
+      <br>
+      <h3 id="ocrp-workflow">Workflow (replace with the flowchart; hover interaction still needed)</h3>
+      <div class="body">
+        <figure>
+          <img src="figures/fig-02-ml4ocrp-pipeline.svg"
+            alt="Flowchart of seven scripts, from synthetic ratios through preprocessing, training, recommendation, a per-group time query, and an ODE check, with each output file beside its script">
+          <figcaption><b>Figure 2.</b> The in silico check runs from synthetic 24 h ratios through training and a per-group time query to an ODE comparison at the predicted times.</figcaption>
+        </figure>
+        <p>
+          The synthetic ratio table has more cell groups than target ratios. Each group's ratio at 24 h lies near one of
+          ten values, log-spaced from 0.5 to 6.
+          <code>fitting_score.py</code> then labels those ratios. The comparison across scoring functions is in Score
+          shapes.
+        </p>
+        <figure>
+          <img src="figures/fig-03-ratio-targets-en.svg"
+            alt="Scatter plot of cell-group identifier against ratio at 24 h, with a point for each of 40 groups and gray horizontal lines at ten target ratios">
+          <figcaption><b>Figure 3.</b> Each group's ratio at 24 h lies near one of ten targets spaced logarithmically from 0.5 to 6.</figcaption>
+        </figure>
+      </div>
+      <br>
+      <h3 id="ocrp-score-shapes">Score shapes</h3>
+      <div class="body">
+        <p>
+          <code>fitting_score.py</code> can turn the same ratios into scores with five functions. The default remains
+          the symmetric Gaussian, so a call that omits <code>--score_fn</code> is unchanged.
+        </p>
+        <table class="fit-table">
+          <thead>
+            <tr>
+              <th><code>--score_fn</code></th>
+              <th>Shape</th>
+              <th>Formula</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>gaussian</code></td>
+              <td>Symmetric peak at <code>--opt_ratio</code></td>
+              <td><code>max_score * exp(-((ratio - opt_ratio)^2) / (2 * sigma^2))</code></td>
+            </tr>
+            <tr>
+              <td><code>log_gaussian</code></td>
+              <td>Asymmetric peak at <code>--opt_ratio</code></td>
+              <td>The same Gaussian, evaluated on <code>log(ratio)</code></td>
+            </tr>
+            <tr>
+              <td><code>bimodal</code></td>
+              <td>Peaks at <code>--opt_ratio</code> and <code>--opt_ratio_2</code></td>
+              <td>Weighted sum of two Gaussians, scaled so the taller peak equals <code>--max_score</code></td>
+            </tr>
+            <tr>
+              <td><code>sigmoid</code></td>
+              <td>Increasing S, midpoint <code>--opt_ratio</code></td>
+              <td><code>max_score / (1 + exp(-(ratio - opt_ratio) / sigma))</code></td>
+            </tr>
+            <tr>
+              <td><code>linear</code></td>
+              <td>Straight ramp</td>
+              <td>0 at <code>--linear_min</code>, <code>--max_score</code> at <code>--linear_max</code>, clipped outside
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <figure>
+          <img src="figures/fig-04-score-shapes-en.svg"
+            alt="Line plot of five scoring functions against ratio from 0.5 to 6: a symmetric peak, an asymmetric peak, a two-peak curve, an increasing sigmoid, and a straight ramp">
+          <figcaption><b>Figure 4.</b> The check scores the same ratios with five shapes: two single peaks, two peaks, an increasing sigmoid, and a linear ramp.</figcaption>
+        </figure>
+        <p>
+          <code>test_score_shapes.py</code> builds one ratio table (40 cell groups whose 24 h ratios lie near the ten
+          default targets, seed 0) and scores it with each function.
+          OCRP is trained with the default schedule: 100 pretraining epochs, 200 Gaussian-process epochs, seed 0.
+          The predicted optimum maximizes the posterior mean on <code>[0.5, 6]</code>, the same interval as the targets.
+          Regret is the true score at the true optimum minus the true score at the predicted ratio.
+          Score RMSE compares the posterior mean with the true scoring function on that interval.
+        </p>
+        <div class="table-scroll">
+          <table class="fit-table">
+            <thead>
+              <tr>
+                <th>Scoring function</th>
+                <th class="num">True optimum</th>
+                <th class="num">Predicted</th>
+                <th class="num">Abs. error</th>
+                <th class="num">Regret</th>
+                <th class="num">Score RMSE</th>
+                <th class="num">UCB</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Gaussian</td>
+                <td class="num">2.50</td>
+                <td class="num">2.51</td>
+                <td class="num">0.006</td>
+                <td class="num">0</td>
+                <td class="num">0.010</td>
+                <td class="num">2.50</td>
+              </tr>
+              <tr>
+                <td>Log-Gaussian</td>
+                <td class="num">2.50</td>
+                <td class="num">2.48</td>
+                <td class="num">0.025</td>
+                <td class="num">0.0004</td>
+                <td class="num">0.010</td>
+                <td class="num">2.44</td>
+              </tr>
+              <tr>
+                <td>Bimodal</td>
+                <td class="num">4.00</td>
+                <td class="num">3.73</td>
+                <td class="num">0.27</td>
+                <td class="num">0.207</td>
+                <td class="num">0.077</td>
+                <td class="num">3.72</td>
+              </tr>
+              <tr>
+                <td>Sigmoid</td>
+                <td class="num">6.00</td>
+                <td class="num">6.00</td>
+                <td class="num">0</td>
+                <td class="num">0</td>
+                <td class="num">0.004</td>
+                <td class="num">6.00</td>
+              </tr>
+              <tr>
+                <td>Linear</td>
+                <td class="num">6.00</td>
+                <td class="num">6.00</td>
+                <td class="num">0</td>
+                <td class="num">0</td>
+                <td class="num">0.031</td>
+                <td class="num">6.00</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          The symmetric peak, the asymmetric peak, the sigmoid, and the linear ramp stay within 0.03 of the true
+          optimum, and the regret is at most 0.0004.
+          The two-peak function is looser: the predicted ratio is 3.73 against the taller peak at 4.00, and the regret
+          is 0.21.
+          UCB on that fit recommends 3.72.
+        </p>
+        <figure>
+          <img src="figures/fig-05-score-shape-fit-en.svg"
+            alt="Five panels, each overlaying the true scoring curve in black, the OCRP posterior mean in blue, pink training points, and dashed lines at the true and predicted optima">
+          <figcaption><b>Figure 5.</b> OCRP recovers the single-peak and monotonic scores. The two-peak score is the loose case: the predicted ratio is 3.73 against a true peak at 4.00.</figcaption>
+        </figure>
+        <figure>
+          <img src="figures/fig-06-score-shape-performance-en.svg"
+            alt="Two bar charts of absolute error and score regret for the symmetric peak, asymmetric peak, two-peak function, sigmoid, and linear ramp">
+          <figcaption><b>Figure 6.</b> Absolute error stays within 0.03 except for the two-peak function, whose regret is 0.21.</figcaption>
+        </figure>
+      </div>
+      <br>
+      <h3 id="ocrp-architecture">Architecture (replace with the architecture diagram; hover interaction still needed)
+      </h3>
+      <div class="body">
+        <figure>
+          <img src="figures/fig-07-ocrp-architecture.svg"
+            alt="Diagram of a frozen ratio encoder feeding a deep-kernel Gaussian process, with a dashed auxiliary score head and separate mean and UCB readouts">
+          <figcaption><b>Figure 7.</b> After pretraining, the Gaussian process reads the raw ratio concatenated with a frozen embedding. Mean and UCB are two readouts of the same posterior.</figcaption>
+        </figure>
+      </div>
+      <br>
+      <h3 id="ocrp-dependencies">Dependencies</h3>
+      <div class="body">
+        <p>
+          <code>Val.sh</code> expects a conda environment named <code>ocrp</code>.
+          The same packages are required if you run the scripts or the GUI directly.
+          Versions are not pinned in this repository.
+        </p>
+        <table class="pkg-table">
+          <thead>
+            <tr>
+              <th>Package</th>
+              <th>Used for</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Python 3</td>
+              <td>All scripts</td>
+            </tr>
+            <tr>
+              <td>NumPy</td>
+              <td>Arrays and <code>.npy</code> dictionaries</td>
+            </tr>
+            <tr>
+              <td>pandas</td>
+              <td>CSV tables</td>
+            </tr>
+            <tr>
+              <td>PyTorch</td>
+              <td>Encoder, Gaussian process tensors, and device selection</td>
+            </tr>
+            <tr>
+              <td>GPyTorch</td>
+              <td>Exact deep-kernel Gaussian process</td>
+            </tr>
+            <tr>
+              <td>SciPy</td>
+              <td>ODE integration and parameter fitting in the time query and the in silico scripts</td>
+            </tr>
+            <tr>
+              <td>scikit-learn</td>
+              <td>Residual Gaussian process in the time query</td>
+            </tr>
+            <tr>
+              <td>tqdm</td>
+              <td>Progress display during the per-ID query</td>
+            </tr>
+            <tr>
+              <td>Matplotlib</td>
+              <td>Figures written by <code>InSilicoValidation/test_score_shapes.py</code></td>
+            </tr>
+            <tr>
+              <td>Streamlit</td>
+              <td><code>app.py</code> only</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          On Windows, PyTorch and the Intel OpenMP runtime used by NumPy can abort at import.
+          The GUI sets <code>KMP_DUPLICATE_LIB_OK=TRUE</code> before importing them.
+          Set the same variable before a command-line run if you see that abort.
+        </p>
+        <p>
+          Training and the per-ID query select MPS, then CUDA, then CPU when <code>--device</code> is omitted.
+          Ratio recommendation selects CUDA, then CPU.
+        </p>
+      </div>
+      <br>
+      <h3 id="ocrp-usage">How to use it</h3>
+      <div class="body">
+        <p>
+          Run the shell pipeline from a Unix shell after editing <code>PROJECT_ROOT</code> at the top of
+          <code>Val.sh</code>.
+          It activates <code>ocrp</code> and runs all seven steps with default arguments.
+          Omitting the optional flags leaves the numerical defaults and output paths unchanged.
+        </p>
+        <pre><code class="language-bash">
+bash Val.sh
+      </code></pre>
+        <p>
+          The Python scripts resolve <code>../Data</code> from their own directory, including <code>Data/Model</code>
+          for the checkpoint, so run them from <code>Model/</code> or <code>InSilicoValidation/</code>, not from the
+          repository root.
+          A laboratory run, without the synthetic data or the final ODE check, is:
+        </p>
+        <pre><code class="language-bash">
+cd Model
+python preprocess_data.py
+python ocrp_model_train.py
+python predict_ratio_and_recommend_by_ucb.py
+python query_per_id.py --fit_ode
+      </code></pre>
+        <p>
+          <code>--fit_ode</code> is off unless you pass it, because fitting the ODE for every cell group is slow.
+          <code>Val.sh</code> passes it.
+          Every other hyperparameter is an optional flag with a default.
+          The full list, including types and help text, is in <code>Model/SCRIPT_ARGUMENTS.md</code>.
+          Common overrides are <code>--d_model</code>, <code>--hidden_dim</code>, <code>--n_epochs</code>, and
+          <code>--beta</code>.
+        </p>
+      </div>
+      <br>
+      <h3 id="ocrp-gui">GUI: WebOcrp</h3>
+      <div class="body">
+        <p>
+          From the repository root, with the same environment active:
+        </p>
+        <pre><code class="language-bash">
+streamlit run app.py
+      </code></pre>
+        <p>
+          The page is both a way for teammates to run the pipeline without the command line and a demonstration of the
+          same software.
+          It imports <code>Model/</code>, so it trains and queries the same model as the command line.
+          Checkpoints written by either side can be read by the other when <code>hidden_dim</code> stays at its default
+          of 32.
+        </p>
+        <p>
+          The workbench has four tabs.
+        </p>
+        <ol>
+          <li>
+            <p>
+              <b>Preprocess.</b>
+              Upload the two CSVs, point at local files, or load an existing <code>id_data_dict.npy</code>.
+              After a successful merge, every ratio–score pair is drawn on one scatter plot, with ratio on the
+              horizontal axis and score on the vertical axis.
+            </p>
+            <div class="img-row">
+              <div class="img-item">
+                <figure>
+                  <img src="figures/fig-08-preprocess-tab.png"
+                    alt="Screenshot of the Preprocess tab with data-source choices, save paths, and a CSV upload control">
+                  <figcaption><b>Figure 8.</b> The Preprocess tab accepts the ratio and score tables, or an existing <code>id_data_dict.npy</code>.</figcaption>
+                </figure>
+              </div>
+              <div class="img-item">
+                <figure>
+                  <img src="figures/fig-09-preprocess-scatter.png"
+                    alt="Screenshot of a data table beside a scatter plot of score against ratio">
+                  <figcaption><b>Figure 9.</b> After the merge, every ratio–score pair is plotted with ratio on the horizontal axis and score on the vertical axis.</figcaption>
+                </figure>
+              </div>
+            </div>
+          </li>
+          <li>
+            <p>
+              <b>Train.</b>
+              Fit the encoder and the deep-kernel Gaussian process.
+              Width, pretraining, validation fraction, and the marginal-likelihood reduction are on the page.
+            </p>
+            <div class="img-row">
+              <div class="img-item">
+                <figure>
+                  <img src="figures/fig-10-train-tab.png"
+                    alt="Screenshot of the Train tab with width, pretraining, validation-fraction, and marginal-likelihood controls">
+                  <figcaption><b>Figure 10.</b> Training uses the same encoder and deep-kernel Gaussian process as the command line.</figcaption>
+                </figure>
+              </div>
+              <div class="img-item">
+                <figure>
+                  <img src="figures/fig-11-train-log.png"
+                    alt="Screenshot of a training log ending in a checkpoint-saved message">
+                  <figcaption><b>Figure 11.</b> A finished run writes <code>OCRP_model.pth</code>. With <code>hidden_dim</code> left at 32, that checkpoint can be loaded by the command-line scripts.</figcaption>
+                </figure>
+              </div>
+            </div>
+          </li>
+          <li>
+            <p>
+              <b>Recommend.</b>
+              Load <code>OCRP_model.pth</code>, report the ratio that maximizes the predicted score, and report the UCB
+              recommendation.
+              The page also plots mean, standard deviation, and UCB against ratio.
+            </p>
+            <div class="img-row">
+              <div class="img-item">
+                <figure>
+                  <img src="figures/fig-12-recommend-tab.png"
+                    alt="Screenshot of the Recommend tab with search bounds, number of starts, and the UCB coefficient">
+                  <figcaption><b>Figure 12.</b> Recommendation searches the posterior mean for the best ratio and scores a grid with UCB.</figcaption>
+                </figure>
+              </div>
+              <div class="img-item">
+                <figure>
+                  <img src="figures/fig-13-recommend-curves.png"
+                    alt="Screenshot of reported optimal ratio and predicted score, with curves of posterior mean, standard deviation, and UCB against ratio">
+                  <figcaption><b>Figure 13.</b> The plotted mean is the predicted score. The UCB curve, mean plus β times the standard deviation, marks the next ratio to sample.</figcaption>
+                </figure>
+              </div>
+            </div>
+          </li>
+          <li>
+            <p>
+              <b>Query.</b>
+              For the recommended ratio, or for a ratio you type, fit each cell group and return a time and a status.
+              This tab walks the groups one by one so a progress bar can update.
+              It does not start the process pool used by <code>query_per_id.py</code>.
+            </p>
+            <div class="img-row">
+              <div class="img-item">
+                <figure>
+                  <img src="figures/fig-14-query-tab.png"
+                    alt="Screenshot of the Query tab with a target ratio, a tolerance, ODE-fitting options, and a progress bar">
+                  <figcaption><b>Figure 14.</b> The query walks cell groups one at a time so the page can show progress. It does not start the command-line process pool.</figcaption>
+                </figure>
+              </div>
+              <div class="img-item">
+                <figure>
+                  <img src="figures/fig-15-query-results.png"
+                    alt="Screenshot of query summary counts, a per-group status table, and a bar chart of predicted times">
+                  <figcaption><b>Figure 15.</b> Each group returns a time and a status: already seen, predicted in the future, or not reached.</figcaption>
+                </figure>
+              </div>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </div>
+    <br>
+
+    <div class="main" id="Hardware">
+      <h2>Hardware</h2>
+      <h3 id="hw-abstract">Abstract</h3>
+      <div class="body">
+        <p>
+          Software support for the hardware pigment-mixing tests.
+          Phyphox color recordings of blue and yellow solutions are turned into a blue volume fraction.
+        </p>
+        <p>
+          Two phyphox experiments mixed blue and yellow pigment stocks in known volume ratios.
+          The stocks did not start at the same concentration, and the camera exposure was not the same, so a single
+          plane fitted to raw Hue and Saturation does not transfer from one experiment to the other.
+        </p>
+        <p>
+          CalcRatio keeps each experiment's pure yellow (<code>ratio = 0</code>) and pure blue (<code>ratio = 1</code>)
+          as color endpoints.
+          A sample is written as its position between those endpoints, <code>z_hue</code> and <code>z_saturation</code>.
+          One logistic curve, shared by both experiments, maps that position to the blue volume fraction.
+          On 63 samples the shared fit has <code>R-squared = 0.801</code> and <code>RMSE = 0.118</code>.
+          The raw Hue–Saturation plane on the same rows has <code>R-squared = 0.638</code>.
+        </p>
+        <p>
+          Experiment 1 (<code>data/1_*</code>) has five recorded stages; the model uses stage 2 (21 samples).
+          Experiment 2 (<code>data/2_*</code>) has one stage and uses that stage (42 samples).
+        </p>
+        <p>
+          This is the second fit. The first used only Hue and Saturation and had to be repeated for each batch.
+          Adding each batch's pure blue and pure yellow is what lets one curve cover both batches.
+          The two steps are written out under Optimization iteration.
+        </p>
+      </div>
+      <br>
+      <h3 id="hw-why">Why this pipeline</h3>
+      <div class="body">
+        <p>
+          Hardware needs a fraction it can compare across batches.
+          The phone records Hue and Saturation, not the volume fraction directly.
+          Two facts from the mixing experiment decide the form of the model.
+        </p>
+        <p>
+          The same volume ratio does not land on the same Hue and Saturation when the stock concentrations or the
+          exposure change.
+          Pure yellow and pure blue measured in that same batch carry those changes.
+          Scaling Hue and Saturation by those two readings puts both batches into one coordinate system: 0 at that
+          batch's yellow and 1 at that batch's blue.
+        </p>
+        <p>
+          The blue volume fraction lies between 0 and 1.
+          It rises as the sample moves from yellow toward blue, and the rise flattens near the two pure stocks.
+          A logistic of the rescaled hue and saturation has that shape.
+          The fitted equation and the comparison with the first plane are in Optimization iteration.
+        </p>
+        <p>
+          Path defaults below are relative to the repository root.
+          The scripts resolve them from the folder that contains <code>scripts</code>, so they do not depend on the
+          working directory.
+          A relative path passed on the command line is still relative to the working directory.
+          Run the commands below from the repository root.
+        </p>
+        <pre><code class="language-bash">
+python scripts/build_id_ratio_dict.py
+python scripts/data_preprocess.py
+python scripts/data_preprocess.py -i data/1_original                      \
+                                  -o data/1_processed                     \
+                                  --dict_file data/1_settings/mapping.npy \
+                                  -n 5                                    \
+                                  --key_stage 2
+python scripts/fit_model.py
+      </code></pre>
+        <p>
+          The first preprocess command is experiment 2 (one stage).
+          The second is experiment 1 (five stages, keep stage 2).
+        </p>
+      </div>
+      <br>
+      <h3 id="hw-iteration">Optimization iteration</h3>
+      <div class="body">
+        <p>
+          The predictors changed once.
+          The first equation saw only the sample color and had to be fit again for every batch.
+          The second equation also sees that batch's pure blue and pure yellow, and one fit is shared.
+        </p>
+        <ul>
+          <li>
+            <b>Version 1: Hue and Saturation, one plane per batch</b>
+            <p>
+              The sample's Hue and Saturation were the only inputs.
+              Each experiment got its own plane:
+            </p>
+            <p>
+              \[
+              \mathrm{ratio} = a_0 + a_1\,\mathrm{Hue} + a_2\,\mathrm{Saturation}
+              \]
+            </p>
+            <table class="fit-table">
+              <thead>
+                <tr>
+                  <th>Fit</th>
+                  <th class="num">\(n\)</th>
+                  <th class="num">\(R^2\)</th>
+                  <th class="num">\(RMSE\)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Experiment 1 alone</td>
+                  <td class="num">21</td>
+                  <td class="num">0.805</td>
+                  <td class="num">0.134</td>
+                </tr>
+                <tr>
+                  <td>Experiment 2 alone</td>
+                  <td class="num">42</td>
+                  <td class="num">0.856</td>
+                  <td class="num">0.091</td>
+                </tr>
+                <tr>
+                  <td>Both batches, one plane</td>
+                  <td class="num">63</td>
+                  <td class="num">0.638</td>
+                  <td class="num">0.159</td>
+                </tr>
+              </tbody>
+            </table>
+            <p>
+              Inside one batch the plane follows the prepared fraction.
+              Forcing both batches onto that same plane drops \(R^2\) from about 0.8 to 0.638, because the pure-stock
+              colors are different.
+              A new concentration or a new exposure needs a new pair of coefficients.
+            </p>
+          </li>
+          <li>
+            <b>Version 2: Hue, Saturation, Blue, and Yellow, one curve across batches</b>
+            <p>
+              Blue and Yellow are the Hue and Saturation of the pure blue stock and the pure yellow stock measured in
+              the same batch.
+              They rescale the sample before the fraction is predicted:
+            </p>
+            <p>
+              \[
+              \begin{aligned}
+              z_{\mathrm{hue}} &= \frac{\mathrm{Hue} - \mathrm{Yellow\_Hue}}{\mathrm{Blue\_Hue} - \mathrm{Yellow\_Hue}}
+              \\
+              z_{\mathrm{saturation}} &= \frac{\mathrm{Saturation} -
+              \mathrm{Yellow\_Saturation}}{\mathrm{Blue\_Saturation} - \mathrm{Yellow\_Saturation}} \\
+              \mathrm{ratio} &= \frac{1}{1+\exp\left(-(-1.1397 + 1.4533\, z_{\mathrm{hue}} + 1.8247\,
+              z_{\mathrm{saturation}})\right)}
+              \end{aligned}
+              \]
+            </p>
+            <p>
+              The three coefficients are estimated once, on all 63 rows.
+            </p>
+            <table class="fit-table">
+              <thead>
+                <tr>
+                  <th>Fit</th>
+                  <th class="num">\(n\)</th>
+                  <th class="num">\(R^2\)</th>
+                  <th class="num">\(RMSE\)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Shared logistic, both batches</td>
+                  <td class="num">63</td>
+                  <td class="num">0.801</td>
+                  <td class="num">0.118</td>
+                </tr>
+                <tr>
+                  <td>Experiment 1 under that curve</td>
+                  <td class="num">21</td>
+                  <td class="num">0.781</td>
+                  <td class="num">0.142</td>
+                </tr>
+                <tr>
+                  <td>Experiment 2 under that curve</td>
+                  <td class="num">42</td>
+                  <td class="num">0.815</td>
+                  <td class="num">0.103</td>
+                </tr>
+              </tbody>
+            </table>
+            <p>
+              The shared curve is a little looser than each batch's own Hue–Saturation plane, and much tighter than one
+              Hue–Saturation plane placed on both batches at once.
+              A later batch keeps these coefficients.
+              It only needs its own pure blue and pure yellow measured under the same conditions, which supplies Blue
+              and Yellow for the rescaling.
+            </p>
+          </li>
+        </ul>
+      </div>
+      <br>
+      <h3 id="hw-workflow">Workflow and architecture (replace with the flowchart; hover interaction still needed)</h3>
+      <div class="body">
+        <figure>
+          <img src="figures/fig-16-hardware-pipeline-en.svg"
+            alt="Flowchart from the sample sheet and phyphox Excel files through stage features to one shared logistic model and its plots">
+          <figcaption><b>Figure 16.</b> Stage features from both phyphox experiments are rescaled by each batch's pure yellow and pure blue, then fit with one logistic.</figcaption>
+        </figure>
+      </div>
+      <br>
+      <h3 id="hw-dependencies">Dependencies</h3>
+      <div class="body">
+        <p>
+          Python 3.12 or newer. Packages below are the ones imported by the three scripts.
+        </p>
+        <table class="pkg-table">
+          <thead>
+            <tr>
+              <th>Package</th>
+              <th>Used for</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>numpy</code></td>
+              <td>Arrays, circular means, and <code>.npy</code> dictionaries</td>
+            </tr>
+            <tr>
+              <td><code>pandas</code></td>
+              <td>Tables, the sample-sheet CSV, and phyphox Excel files</td>
+            </tr>
+            <tr>
+              <td><code>openpyxl</code></td>
+              <td>Reading <code>.xlsx</code> workbooks through pandas</td>
+            </tr>
+            <tr>
+              <td><code>matplotlib</code></td>
+              <td>Fit surface, residual plots, predicted-versus-actual plot, and QQ plot</td>
+            </tr>
+            <tr>
+              <td><code>scipy</code></td>
+              <td>Logistic least squares and the t distribution for coefficient tests</td>
+            </tr>
+            <tr>
+              <td><code>statsmodels</code></td>
+              <td>Linear Hue–Saturation baseline and the residual QQ plot</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <br>
+      <h3 id="hw-output">Raw output</h3>
+      <div class="body">
+        <p>
+          <code>python scripts/fit_model.py</code> prints the following.
+          Residuals are fitted ratio minus measured ratio.
+        </p>
+        <pre><code class="language-text">
+mixing model
+z_hue        = (Hue - Yellow_Hue) / (Blue_Hue - Yellow_Hue)
+z_saturation = (Saturation - Yellow_Saturation) / (Blue_Saturation - Yellow_Saturation)
+ratio        = 1 / (1 + exp(-(-1.1397 + 1.4533 * z_hue + 1.8247 * z_saturation)))
+
+parameters
+                coef  std_err       t    p
+intercept    -1.1397   0.1314 -8.6743  0.0
+z_hue         1.4533   0.1538  9.4490  0.0
+z_saturation  1.8247   0.2084  8.7550  0.0
+
+R-squared: 0.8012
+RMSE:      0.1176
+baseline ratio ~ Hue + Saturation R-squared: 0.6375
+
+pure yellow / pure blue endpoints
+       Yellow_Hue  Yellow_Saturation  Blue_Hue  Blue_Saturation
+group
+1         177.788              0.791   215.408            0.990
+2         107.502              0.272   210.154            0.586
+
+fit by group
+1: n=21  R-squared=0.7809  RMSE=0.1417
+2: n=42  R-squared=0.8152  RMSE=0.1034
+
+residual skew: 0.5731694436244197
+residual kurtosis: -0.3345401332238507
+      </code></pre>
+        <p>
+          Saved files:
+        </p>
+        <table class="pkg-table">
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Content</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>data/2_processed/combined_modeling_data.pkl</code></td>
+              <td>Combined modeling table, including endpoints, normalized color, and predicted ratio</td>
+            </tr>
+            <tr>
+              <td><code>data/2_processed/mixing_model.npy</code></td>
+              <td>Three coefficients and the stage index used for each experiment</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <br>
+      <h3 id="hw-fit">Reading the fit</h3>
+      <div class="body">
+        <p>
+          The intercept and both color coefficients have p-values below 0.001 (60 residual degrees of freedom).
+          <code>z_hue</code> and <code>z_saturation</code> each move the predicted fraction in the blue direction.
+        </p>
+        <p>
+          An RMSE of 0.118 is about twelve percentage points of blue volume fraction.
+          The largest absolute residual on this fit is 0.257.
+          That is a usable check of the hardware color channel across the two stocks.
+          It is coarse if the hardware needs the fraction to a few percentage points.
+        </p>
+        <p>
+          Experiment 2 (n = 42) is the tighter group: \(R^2 = 0.815\), RMSE \(= 0.103\). Experiment 1 (n = 21) is
+          looser:
+          \(R^2 = 0.781\), RMSE \(= 0.142\).
+          Residual skew is 0.57 and kurtosis is -0.33, so the errors lean slightly positive and do not show a heavy
+          tail.
+        </p>
+        <p>
+          A straight line fitted inside one experiment alone is a little tighter (about 0.80 for experiment 1 and 0.86
+          for experiment 2).
+          That line belongs to one stock pair and one camera setup.
+          The shared logistic is the model that accepts a new pair after the pure yellow and pure blue of that pair have
+          been measured.
+        </p>
+        <p>
+          Endpoint colors show why the normalization is doing the work:
+        </p>
+        <table class="fit-table">
+          <thead>
+            <tr>
+              <th>Experiment</th>
+              <th class="num">Yellow Hue</th>
+              <th class="num">Yellow Saturation</th>
+              <th class="num">Blue Hue</th>
+              <th class="num">Blue Saturation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td class="num">177.788°</td>
+              <td class="num">0.791</td>
+              <td class="num">215.408°</td>
+              <td class="num">0.990</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td class="num">107.502°</td>
+              <td class="num">0.272</td>
+              <td class="num">210.154°</td>
+              <td class="num">0.586</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Experiment 1's pure yellow on stage 2 is 177.8°, while samples with 5–25% blue sit near 126–139°.
+          The pure-yellow reading is not at the yellow end of that stage, so some <code>z_hue</code> values fall below
+          0.
+          Stage 1 of the same recordings tracks ratio more closely (correlation about 0.94) than stage 2 (about 0.82).
+          The fit follows the requested stage 2.
+          If stage 2 is a second illumination rather than the sample, the endpoints should be recomputed.
+        </p>
+        <p>
+          The ratio of stock concentrations was not entered as its own parameter.
+          Only the ratio of the two strengths would change the curve, and that ratio is not separated from the logistic
+          intercept on these two batches.
+          The measured endpoints already carry the batch-to-batch color shift.
+        </p>
+      </div>
+      <br>
+      <h3 id="hw-figure">Reading the figure</h3>
+      <div class="body">
+        <p>
+          Blue circles are experiment 1. Orange triangles are experiment 2.
+        </p>
+        <figure>
+          <img src="figures/fig-17-predicted-vs-prepared.png"
+            alt="Scatter plot of predicted against prepared blue volume fraction, with a red identity line, blue circles for experiment 1, and orange triangles for experiment 2">
+          <figcaption><b>Figure 17.</b> Predicted fraction against the prepared fraction (n = 63). Points on the red line agree with the shared curve. Scatter is larger for experiment 1, matching its RMSE of 0.142.</figcaption>
+        </figure>
+        <figure>
+          <img src="figures/fig-18-logistic-surface.png"
+            alt="Three-dimensional surface of the shared logistic in normalized hue and saturation, with blue circles for experiment 1 and orange triangles for experiment 2">
+          <figcaption><b>Figure 18.</b> The shared logistic in <code>z_hue</code> and <code>z_saturation</code>. Experiment 2 sits between the yellow and blue endpoints. Experiment 1 extends below <code>z_hue = 0</code> because its stage-2 pure yellow is not the yellow extreme of that series.</figcaption>
+        </figure>
+        <figure>
+          <img src="figures/fig-19-residual-histogram.png"
+            alt="Histogram of residuals, fitted ratio minus measured ratio, with a longer tail on the positive side">
+          <figcaption><b>Figure 19.</b> Residuals (fitted ratio minus measured ratio) mostly fall within about ±0.2. The longer positive tail means the fit is high on some samples. Residual skew is 0.57.</figcaption>
+        </figure>
+        <figure>
+          <img src="figures/fig-20-residual-vs-fitted.png"
+            alt="Scatter plot of residuals against fitted blue volume fraction, with blue circles for experiment 1 and orange triangles for experiment 2">
+          <figcaption><b>Figure 20.</b> Residuals stay around zero from low to high fitted fractions, without a strong funnel.</figcaption>
+        </figure>
+        <figure>
+          <img src="figures/fig-21-residual-qq.png"
+            alt="Normal quantile-quantile plot of the residuals, with the upper tail departing from the reference line">
+          <figcaption><b>Figure 21.</b> The normal QQ plot shows the same mild right skew as the histogram: the upper tail leaves the reference line. Kurtosis is −0.33.</figcaption>
+        </figure>
+      </div>
+    </div>
+    <br>
+
+    <div class="main" id="iHP">
+      <h2>iHP</h2>
+      <h3 id="ihp-why">Why Desktiny</h3>
+      <div class="body">
+        <p>
+          cc
+        </p>
+      </div>
+      <h3 id="ihp-play">How to play</h3>
+      <div class="body">
+        <p>
+          cc
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="botBar">
+    <p>
+      ShanghaiTech
+    </p>
+  </div>
+
+  <script>
+    const NAV_OFFSET = 88;
+    const MIN_DURATION = 350;
+    const MAX_DURATION = 900;
+    const SPEED_FACTOR = 0.6;
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    let activeScroll = null;
+
+    function smoothScrollTo(targetY) {
+      cancelActiveScroll();
+
+      const startY = Math.max(window.scrollY, 0);
+      const maxY = document.documentElement.scrollHeight - window.innerHeight;
+      const endY = Math.max(0, Math.min(targetY, maxY));
+      const distance = endY - startY;
+
+      if (Math.abs(distance) < 1) return;
+
+      const duration = Math.min(
+        MAX_DURATION,
+        Math.max(MIN_DURATION, Math.abs(distance) * SPEED_FACTOR)
+      );
+
+      const startTime = performance.now();
+      let rafId = 0;
+      let cancelled = false;
+
+      function step(now) {
+        if (cancelled) return;
+        const t = Math.min((now - startTime) / duration, 1);
+        window.scrollTo(0, startY + distance * easeOutCubic(t));
+        if (t < 1) {
+          rafId = requestAnimationFrame(step);
+        } else {
+          cleanup();
+        }
+      }
+
+      function cancel() {
+        if (cancelled) return;
+        cancelled = true;
+        cancelAnimationFrame(rafId);
+        cleanup();
+      }
+
+      function cleanup() {
+        window.removeEventListener('wheel', cancel);
+        window.removeEventListener('touchstart', cancel);
+        window.removeEventListener('keydown', onKey);
+        if (activeScroll === handle) activeScroll = null;
+      }
+
+      function onKey(e) {
+        const keys = ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '];
+        if (keys.includes(e.key)) cancel();
+      }
+
+      window.addEventListener('wheel', cancel, { passive: true });
+      window.addEventListener('touchstart', cancel, { passive: true });
+      window.addEventListener('keydown', onKey);
+
+      const handle = { cancel };
+      activeScroll = handle;
+
+      rafId = requestAnimationFrame(step);
+    }
+
+    function cancelActiveScroll() {
+      if (activeScroll) activeScroll.cancel();
+    }
+
+    const dropdowns = Array.prototype.slice.call(document.querySelectorAll('.nav-item.dropdown'));
+    const coarsePointer = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+
+    function setDropdownOpen(item, open) {
+      item.classList.toggle('show', open);
+      const trigger = item.querySelector('.nav-link');
+      if (trigger) trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    function closeDropdowns(except) {
+      dropdowns.forEach(item => {
+        if (item !== except) setDropdownOpen(item, false);
+      });
+    }
+
+    dropdowns.forEach(item => {
+      const trigger = item.querySelector('.nav-link');
+      item.addEventListener('mouseenter', () => {
+        if (!coarsePointer) trigger.setAttribute('aria-expanded', 'true');
+      });
+      item.addEventListener('mouseleave', () => {
+        if (!item.classList.contains('show') && !item.classList.contains('is-dismissed')) {
+          trigger.setAttribute('aria-expanded', 'false');
+        }
+      });
+      item.addEventListener('focusout', e => {
+        if (!item.contains(e.relatedTarget)) setDropdownOpen(item, false);
+      });
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.nav-item.dropdown')) closeDropdowns(null);
+    });
+
+    // A dismissed menu no longer receives the pointer, so mouseleave would fire at once.
+    // Re-open on hover only after the pointer has left the menu area.
+    window.addEventListener('mousemove', e => {
+      dropdowns.forEach(item => {
+        if (!item.classList.contains('is-dismissed')) return;
+        const menu = item.querySelector('.dropdown-menu');
+        const boxes = [item.getBoundingClientRect()];
+        if (menu) boxes.push(menu.getBoundingClientRect());
+        const inside = boxes.some(r =>
+          e.clientX >= r.left && e.clientX <= r.right &&
+          e.clientY >= r.top && e.clientY <= r.bottom
+        );
+        if (!inside) {
+          item.classList.remove('is-dismissed');
+          const trigger = item.querySelector('.nav-link');
+          if (trigger) trigger.setAttribute('aria-expanded', 'false');
+        }
+      });
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      const open = document.querySelector('.nav-item.dropdown:focus-within, .nav-item.dropdown.show');
+      closeDropdowns(null);
+      if (open) {
+        const trigger = open.querySelector('.nav-link');
+        if (trigger) trigger.blur();
+      }
+    });
+
+    document.querySelectorAll('.menu-nav a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const item = a.closest('.nav-item.dropdown');
+        const isTrigger = item && a.classList.contains('nav-link');
+
+        // Touch screens have no hover: the first tap opens the menu, and the next tap jumps to the section.
+        if (isTrigger && coarsePointer && !item.classList.contains('show')) {
+          e.preventDefault();
+          closeDropdowns(item);
+          setDropdownOpen(item, true);
+          return;
+        }
+
+        const id = a.getAttribute('href').slice(1);
+        const target = document.getElementById(id);
+        if (!target) return;
+
+        e.preventDefault();
+        if (item) item.classList.add('is-dismissed');
+        closeDropdowns(null);
+
+        const y = target.getBoundingClientRect().top + window.scrollY - NAV_OFFSET;
+        smoothScrollTo(y);
+
+        history.pushState(null, '', '#' + id);
+      });
+    });
+
+    (function () {
+      const nav = document.getElementById('nav');
+      if (!nav) return;
+
+      const DELTA = 8;
+      const TOP_OFFSET = 60;
+      const IDLE_GAP = 150;
+
+      let lastY = Math.max(window.scrollY, 0);
+      let lastTime = performance.now();
+      let ticking = false;
+
+      function update() {
+        const now = performance.now();
+        const y = Math.max(window.scrollY, 0);
+
+        if (activeScroll) {
+          nav.classList.remove('navbar-hide');
+          lastY = y; lastTime = now; ticking = false;
+          return;
+        }
+
+        if (y <= TOP_OFFSET) {
+          nav.classList.remove('navbar-hide');
+          lastY = y; lastTime = now; ticking = false;
+          return;
+        }
+
+        const atBottom = window.innerHeight + y >= document.documentElement.scrollHeight - 2;
+        if (atBottom) {
+          nav.classList.remove('navbar-hide');
+          lastY = y; lastTime = now; ticking = false;
+          return;
+        }
+
+        if (now - lastTime > IDLE_GAP) {
+          lastY = y; lastTime = now; ticking = false;
+          return;
+        }
+
+        const delta = y - lastY;
+        if (Math.abs(delta) > DELTA) {
+          nav.classList.toggle('navbar-hide', delta > 0); // Hide the bar while scrolling down.
+          lastY = y;
+        }
+        lastTime = now;
+        ticking = false;
+      }
+
+      window.addEventListener('scroll', () => {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(update);
+        }
+      }, { passive: true });
+
+      update();
+    })();
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      smoothScrollTo = (y) => window.scrollTo(0, y);
+    }
+  </script>
+
+</body>
+
+</html>
