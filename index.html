@@ -882,7 +882,8 @@
             <p>
               Fitting the ODE for every cell group is slow, so <code>query_per_id.py</code> leaves
               <code>--fit_ode</code> off unless it is passed.
-              <code>Val.sh</code> passes it.
+              <code>scripts/Val.sh</code> and <code>scripts/Val.ps1</code> pass it, together with
+              <code>--max_time 24</code>.
               <code>app.py</code> calls the same <code>Model/</code> implementation.
               The interface is there both for teammates who are not running the command line and for demonstration.
               In the browser, the per-group query runs one group at a time so the page can show progress.
@@ -1195,10 +1196,22 @@
       <h3 id="ocrp-dependencies">Dependencies</h3>
       <div class="body">
         <p>
-          <code>Val.sh</code> expects a conda environment named <code>ocrp</code>.
+          From the repository root, the setup script creates a conda environment named <code>ocrp</code> with Python
+          3.13 and installs the pinned packages in <code>scripts/requirements.txt</code>.
           The same packages are required if you run the scripts or the GUI directly.
-          Versions are not pinned in this repository.
         </p>
+        <p>Windows:</p>
+        <pre><code class="language-powershell">
+powershell -ExecutionPolicy Bypass -File scripts\setup_env.ps1
+conda activate ocrp
+$env:KMP_DUPLICATE_LIB_OK = "TRUE"
+      </code></pre>
+        <p>Mac or Linux:</p>
+        <pre><code class="language-bash">
+bash scripts/setup_env.sh
+conda activate ocrp
+export KMP_DUPLICATE_LIB_OK=TRUE
+      </code></pre>
         <table class="pkg-table">
           <thead>
             <tr>
@@ -1208,7 +1221,7 @@
           </thead>
           <tbody>
             <tr>
-              <td>Python 3</td>
+              <td>Python 3.13</td>
               <td>All scripts</td>
             </tr>
             <tr>
@@ -1250,9 +1263,11 @@
           </tbody>
         </table>
         <p>
-          On Windows, PyTorch and the Intel OpenMP runtime used by NumPy can abort at import.
-          The GUI sets <code>KMP_DUPLICATE_LIB_OK=TRUE</code> before importing them.
-          Set the same variable before a command-line run if you see that abort.
+          On Windows and Mac, PyTorch and the Intel OpenMP runtime used by NumPy can abort at import.
+          The activate lines above set <code>KMP_DUPLICATE_LIB_OK</code> for that terminal.
+          <code>app.py</code> and <code>InSilicoValidation/test_score_shapes.py</code> set it before importing the
+          libraries.
+          <code>scripts/Val.sh</code> and <code>scripts/Val.ps1</code> set it for the pipeline.
         </p>
         <p>
           Training and the per-ID query select MPS, then CUDA, then CPU when <code>--device</code> is omitted.
@@ -1265,16 +1280,29 @@
         <p>
           The ML4OCRP source code is at
           <a href="https://gitlab.igem.org/2026/software/shanghaitech-china/ml4ocrp">https://gitlab.igem.org/2026/software/shanghaitech-china/ml4ocrp</a>.
+          It is Apache License 2.0.
         </p>
         <p>
-          Run the shell pipeline from a Unix shell after editing <code>PROJECT_ROOT</code> at the top of
-          <code>Val.sh</code>.
-          It activates <code>ocrp</code> and runs all seven steps with default arguments.
-          Omitting the optional flags leaves the numerical defaults and output paths unchanged.
+          From the repository root, the seven-step pipeline finds the repository from the script path.
+          It uses the conda environment named <code>ocrp</code> when that environment exists, and otherwise uses
+          <code>python</code> on <code>PATH</code>.
+          It passes <code>--fit_ode</code> and <code>--max_time 24</code>.
+          The synthetic table ends at 24 h, and <code>query_per_id.py</code> defaults <code>--max_time</code> to 12 h.
         </p>
-        <pre><code class="language-bash">
-bash Val.sh
+        <p>Windows:</p>
+        <pre><code class="language-powershell">
+powershell -ExecutionPolicy Bypass -File scripts\Val.ps1
       </code></pre>
+        <p>Mac or Linux:</p>
+        <pre><code class="language-bash">
+bash scripts/Val.sh
+      </code></pre>
+        <p>
+          On Unix the same pipeline is <code>make -f scripts/Makefile pipeline</code>.
+          The score-shape check behind the result table is <code>make -f scripts/Makefile score-shapes</code>, which
+          runs <code>InSilicoValidation/test_score_shapes.py</code>.
+          The workbench is <code>make -f scripts/Makefile gui</code>.
+        </p>
         <p>
           The Python scripts resolve <code>../Data</code> from their own directory, including <code>Data/Model</code>
           for the checkpoint, so run them from <code>Model/</code> or <code>InSilicoValidation/</code>, not from the
@@ -1290,7 +1318,8 @@ python query_per_id.py --fit_ode
       </code></pre>
         <p>
           <code>--fit_ode</code> is off unless you pass it, because fitting the ODE for every cell group is slow.
-          <code>Val.sh</code> passes it.
+          <code>scripts/Val.sh</code> and <code>scripts/Val.ps1</code> pass it, and they also pass
+          <code>--max_time 24</code>.
           Every other hyperparameter is an optional flag with a default.
           The full list, including types and help text, is in <code>Model/SCRIPT_ARGUMENTS.md</code>.
           Common overrides are <code>--d_model</code>, <code>--hidden_dim</code>, <code>--n_epochs</code>, and
@@ -1306,6 +1335,9 @@ python query_per_id.py --fit_ode
         <pre><code class="language-bash">
 streamlit run app.py
       </code></pre>
+        <p>
+          On Unix, <code>make -f scripts/Makefile gui</code> starts the same page.
+        </p>
         <p>
           The page is both a way for teammates to run the pipeline without the command line and a demonstration of the
           same software.

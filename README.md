@@ -31,7 +31,7 @@ ML4OCRP（Machine Learning for Optimal Cell Ratio Prediction，最优细胞比�
 
   时间查询是机理模型进入软件的地方。从一开始，目标就是把建模组的 BxB1 重组常微分方程和 ML4OCRP 结合起来；做到这件事的是当前这个版本。对每个细胞群，预测器先拟合这条常微分方程，再拟合残差高斯过程或多项式，而不再只用时间上的高斯过程。
 
-  为每个细胞群拟合常微分方程很慢，所以 `query_per_id.py` 在没有传入 `--fit_ode` 时不开启它。`Val.sh` 会传入。`app.py` 调用同一套 `Model/` 实现。这个界面既给不跑命令行的队员用，也用于展示。在浏览器里，按细胞群的查询一次处理一个群，这样页面可以显示进度。它不启动命令行查询所用的进程池。
+  为每个细胞群拟合常微分方程很慢，所以 `query_per_id.py` 在没有传入 `--fit_ode` 时不开启它。`scripts/Val.sh` 和 `scripts/Val.ps1` 会传入它，并同时传入 `--max_time 24`。`app.py` 调用同一套 `Model/` 实现。这个界面既给不跑命令行的队员用，也用于展示。在浏览器里，按细胞群的查询一次处理一个群，这样页面可以显示进度。它不启动命令行查询所用的进程池。
 
 ## 进一步了解 ML4OCRP
 
@@ -116,11 +116,29 @@ OCRP 预测一个可能还没被测到的比例的分数。
 
 ## 环境依赖
 
-`Val.sh` 需要一个名为 `ocrp` 的 conda 环境。直接跑脚本或图形界面也需要同样的包。本仓库没有固定版本号。
+在仓库根目录运行安装脚本。它会创建名为 `ocrp` 的 conda 环境，使用 Python 3.13，并安装 `scripts/requirements.txt` 里钉死的包。
+
+Windows:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\setup_env.ps1
+conda activate ocrp
+$env:KMP_DUPLICATE_LIB_OK = "TRUE"
+```
+
+Mac 或 Linux:
+
+```bash
+bash scripts/setup_env.sh
+conda activate ocrp
+export KMP_DUPLICATE_LIB_OK=TRUE
+```
+
+直接跑脚本或图形界面也需要同样的包。
 
 | 包 | 用途 |
 | --- | --- |
-| Python 3 | 全部脚本 |
+| Python 3.13 | 全部脚本 |
 | NumPy | 数组和 `.npy` 字典 |
 | pandas | CSV 表 |
 | PyTorch | 编码器、高斯过程张量，以及设备选择 |
@@ -131,19 +149,29 @@ OCRP 预测一个可能还没被测到的比例的分数。
 | Matplotlib | `InSilicoValidation/test_score_shapes.py` 写出的图 |
 | Streamlit | 仅 `app.py` |
 
-在 Windows 上，PyTorch 和 NumPy 所用的 Intel OpenMP 运行时可能在导入时中止。图形界面在导入它们之前设置 `KMP_DUPLICATE_LIB_OK=TRUE`。若命令行出现同样的中止，运行前设置同一个变量。
+在 Windows 和 Mac 上，PyTorch 和 NumPy 所用的 Intel OpenMP 运行时可能在导入时中止。上面的激活命令会在当前终端设置 `KMP_DUPLICATE_LIB_OK`。`app.py` 和 `InSilicoValidation/test_score_shapes.py` 在导入库之前设置它。`scripts/Val.sh` 和 `scripts/Val.ps1` 会为整条流程设置它。
 
 省略 `--device` 时，训练和按细胞群查询依次选择 MPS、CUDA、CPU。比例推荐依次选择 CUDA、CPU。
 
 ## 如何使用
 
-ML4OCRP 的源代码在 <https://gitlab.igem.org/2026/software/shanghaitech-china/ml4ocrp>。
+ML4OCRP 的源代码在 <https://gitlab.igem.org/2026/software/shanghaitech-china/ml4ocrp>。许可证是 Apache License 2.0。
 
-在 Unix shell 中运行整条流程前，先改 `Val.sh` 顶部的 `PROJECT_ROOT`。它会激活 `ocrp`，并用默认参数跑完七步。不额外传入可选参数时，数值默认值和输出路径保持不变。
+在仓库根目录运行七步流程。脚本从自身路径找到仓库。若存在名为 `ocrp` 的 conda 环境就用它，否则用 `PATH` 上的 `python`。流程会传入 `--fit_ode` 和 `--max_time 24`。合成表结束于 24 h，而 `query_per_id.py` 的 `--max_time` 默认是 12 h。
+
+Windows:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\Val.ps1
+```
+
+Mac 或 Linux:
 
 ```bash
-bash Val.sh
+bash scripts/Val.sh
 ```
+
+在 Unix 上，同一条流程是 `make -f scripts/Makefile pipeline`。结果表背后的打分形状检查是 `make -f scripts/Makefile score-shapes`，它运行 `InSilicoValidation/test_score_shapes.py`。工作台是 `make -f scripts/Makefile gui`。
 
 Python 脚本从自己所在目录解析 `../Data`，检查点在 `Data/Model`，因此要在 `Model/` 或 `InSilicoValidation/` 里运行，而不是在仓库根目录。实验数据的运行不生成合成数据，也不做最后的常微分方程核对：
 
@@ -155,7 +183,7 @@ python predict_ratio_and_recommend_by_ucb.py
 python query_per_id.py --fit_ode
 ```
 
-除非传入 `--fit_ode`，否则它是关闭的，因为为每个细胞群拟合常微分方程很慢。`Val.sh` 会传入它。其余超参数都是带默认值的可选参数。完整列表，包括类型和说明，在 `Model/SCRIPT_ARGUMENTS.md`。常用的覆盖项是 `--d_model`、`--hidden_dim`、`--n_epochs` 和 `--beta`。
+除非传入 `--fit_ode`，否则它是关闭的，因为为每个细胞群拟合常微分方程很慢。`scripts/Val.sh` 和 `scripts/Val.ps1` 会传入它，并同时传入 `--max_time 24`。其余超参数都是带默认值的可选参数。完整列表，包括类型和说明，在 `Model/SCRIPT_ARGUMENTS.md`。常用的覆盖项是 `--d_model`、`--hidden_dim`、`--n_epochs` 和 `--beta`。
 
 ## 图形界面：WebOcrp
 
@@ -164,6 +192,8 @@ python query_per_id.py --fit_ode
 ```bash
 streamlit run app.py
 ```
+
+在 Unix 上，`make -f scripts/Makefile gui` 打开同一个页面。
 
 这个页面既让队员不通过命令行运行流程，也用来展示同一套软件。它导入 `Model/`，因此训练和查询的模型与命令行相同。两边写出的检查点，在 `hidden_dim` 保持默认值 32 时可以互相读取。
 

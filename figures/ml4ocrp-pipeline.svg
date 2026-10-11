@@ -122,7 +122,7 @@
     </g>
 
     <text x="20" y="908" fill="#71717a" font-size="11">Status codes from query_per_id.py: -1 already seen in history, 1 predicted in the future, 0 not reached.</text>
-    <text x="20" y="928" fill="#71717a" font-size="11">Gray boxes are scripts. Blue boxes are the files they write. Order matches Val.sh.</text>
+    <text x="20" y="928" fill="#71717a" font-size="11">Gray boxes are scripts. Blue boxes are the files they write. Order matches scripts/Val.sh.</text>
     <text x="20" y="956" fill="#71717a" font-size="11">The OCRP network itself (encoder and deep-kernel GP) is drawn in figures/ocrp-architecture.svg.</text>
   </g>
 </svg>

@@ -31,7 +31,7 @@ Our measurement approach provides cell ratios and their corresponding experiment
 
   The time query is where the mechanistic model enters the software. From the beginning, the aim was to combine the modeling group's BxB1 recombination ODE with ML4OCRP; this version is the one that does it. For each cell group the predictor fits that ODE and then a residual Gaussian process or polynomial, instead of a Gaussian process on time alone.
 
-  Fitting the ODE for every cell group is slow, so `query_per_id.py` leaves `--fit_ode` off unless it is passed. `Val.sh` passes it. `app.py` calls the same `Model/` implementation. The interface is there both for teammates who are not running the command line and for demonstration. In the browser, the per-group query runs one group at a time so the page can show progress. It does not start the process pool used by the command-line query.
+  Fitting the ODE for every cell group is slow, so `query_per_id.py` leaves `--fit_ode` off unless it is passed. `scripts/Val.sh` and `scripts/Val.ps1` pass it, together with `--max_time 24`. `app.py` calls the same `Model/` implementation. The interface is there both for teammates who are not running the command line and for demonstration. In the browser, the per-group query runs one group at a time so the page can show progress. It does not start the process pool used by the command-line query.
 
 ## Learn more about ML4OCRP
 
@@ -116,11 +116,29 @@ After pretraining, the Gaussian process reads the raw ratio concatenated with a 
 
 ## Dependencies
 
-`Val.sh` expects a conda environment named `ocrp`. The same packages are required if you run the scripts or the GUI directly. Versions are not pinned in this repository.
+From the repository root, the setup script creates a conda environment named `ocrp` with Python 3.13 and installs the pinned packages in `scripts/requirements.txt`.
+
+Windows:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\setup_env.ps1
+conda activate ocrp
+$env:KMP_DUPLICATE_LIB_OK = "TRUE"
+```
+
+Mac or Linux:
+
+```bash
+bash scripts/setup_env.sh
+conda activate ocrp
+export KMP_DUPLICATE_LIB_OK=TRUE
+```
+
+The same packages are required if you run the scripts or the GUI directly.
 
 | Package | Used for |
 | --- | --- |
-| Python 3 | All scripts |
+| Python 3.13 | All scripts |
 | NumPy | Arrays and `.npy` dictionaries |
 | pandas | CSV tables |
 | PyTorch | Encoder, Gaussian process tensors, and device selection |
@@ -131,19 +149,29 @@ After pretraining, the Gaussian process reads the raw ratio concatenated with a 
 | Matplotlib | Figures written by `InSilicoValidation/test_score_shapes.py` |
 | Streamlit | `app.py` only |
 
-On Windows, PyTorch and the Intel OpenMP runtime used by NumPy can abort at import. The GUI sets `KMP_DUPLICATE_LIB_OK=TRUE` before importing them. Set the same variable before a command-line run if you see that abort.
+On Windows and Mac, PyTorch and the Intel OpenMP runtime used by NumPy can abort at import. The activate lines above set `KMP_DUPLICATE_LIB_OK` for that terminal. `app.py` and `InSilicoValidation/test_score_shapes.py` set it before importing the libraries. `scripts/Val.sh` and `scripts/Val.ps1` set it for the pipeline.
 
 Training and the per-ID query select MPS, then CUDA, then CPU when `--device` is omitted. Ratio recommendation selects CUDA, then CPU.
 
 ## How to use it
 
-The ML4OCRP source code is at <https://gitlab.igem.org/2026/software/shanghaitech-china/ml4ocrp>.
+The ML4OCRP source code is at <https://gitlab.igem.org/2026/software/shanghaitech-china/ml4ocrp>. It is Apache License 2.0.
 
-Run the shell pipeline from a Unix shell after editing `PROJECT_ROOT` at the top of `Val.sh`. It activates `ocrp` and runs all seven steps with default arguments. Omitting the optional flags leaves the numerical defaults and output paths unchanged.
+From the repository root, the seven-step pipeline finds the repository from the script path. It uses the conda environment named `ocrp` when that environment exists, and otherwise uses `python` on `PATH`. It passes `--fit_ode` and `--max_time 24`. The synthetic table ends at 24 h, and `query_per_id.py` defaults `--max_time` to 12 h.
+
+Windows:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\Val.ps1
+```
+
+Mac or Linux:
 
 ```bash
-bash Val.sh
+bash scripts/Val.sh
 ```
+
+On Unix the same pipeline is `make -f scripts/Makefile pipeline`. The score-shape check behind the result table is `make -f scripts/Makefile score-shapes`, which runs `InSilicoValidation/test_score_shapes.py`. The workbench is `make -f scripts/Makefile gui`.
 
 The Python scripts resolve `../Data` from their own directory, including `Data/Model` for the checkpoint, so run them from `Model/` or `InSilicoValidation/`, not from the repository root. A laboratory run, without the synthetic data or the final ODE check, is:
 
@@ -155,7 +183,7 @@ python predict_ratio_and_recommend_by_ucb.py
 python query_per_id.py --fit_ode
 ```
 
-`--fit_ode` is off unless you pass it, because fitting the ODE for every cell group is slow. `Val.sh` passes it. Every other hyperparameter is an optional flag with a default. The full list, including types and help text, is in `Model/SCRIPT_ARGUMENTS.md`. Common overrides are `--d_model`, `--hidden_dim`, `--n_epochs`, and `--beta`.
+`--fit_ode` is off unless you pass it, because fitting the ODE for every cell group is slow. `scripts/Val.sh` and `scripts/Val.ps1` pass it, and they also pass `--max_time 24`. Every other hyperparameter is an optional flag with a default. The full list, including types and help text, is in `Model/SCRIPT_ARGUMENTS.md`. Common overrides are `--d_model`, `--hidden_dim`, `--n_epochs`, and `--beta`.
 
 ## GUI: WebOcrp
 
@@ -164,6 +192,8 @@ From the repository root, with the same environment active:
 ```bash
 streamlit run app.py
 ```
+
+On Unix, `make -f scripts/Makefile gui` starts the same page.
 
 The page is both a way for teammates to run the pipeline without the command line and a demonstration of the same software. It imports `Model/`, so it trains and queries the same model as the command line. Checkpoints written by either side can be read by the other when `hidden_dim` stays at its default of 32.
 
