@@ -6,41 +6,7 @@ ML4OCRP（Machine Learning for Optimal Cell Ratio Prediction，最优细胞比�
 
 ## 为什么要做 OCRP
 
-项目给出了一套测定多个比例的方案。See our Measurement page。测得的仍然是少量离散的比例–分数关系，因此无法得知什么时候才达到最好的分数。ML4OCRP 就是补上这个缺口的软件。它用项目方法测得的离散比例–分数数据，预测全局最佳点。
-
-![六个方框围成一圈，中间写着 Programmable Cell Proportions，箭头从实验设计经过构建、硬件测量、干实验分析、评分，再到验证](figures/fig-01-project-cycle.png)
-
-**Figure 1.** ML4OCRP 在第 4 步和第 5 步：把测到的比例变成分数，并选出下一次要采样的比例。给这两步提供数据的测量是第 3 步。See our Measurement page。See our Hardware page。
-
-鼠标悬停在 Figure 1 的某一块上时，打开下面对应的卡片。触摸屏没有悬停，点一下应打开同一张卡片。
-
-**1. 实验设计与构建。** 这一步决定要做的线路、质粒和诱导方案，目标是产生两种细胞状态。软件不设计这段 DNA。它只需要方案给出一组可以要求构建去达到的比例。后面用到的十个比例，从 0.5 到 6 间隔开，就是这张清单。
-
-待画的图。一张卡片上三行：一个盒子标着启动子、BxB1 和两种状态标记；质粒画成圆，只用同样的标签，不写序列；表格的列是诱导剂、剂量、时间和目标比例。只填写比例一列，从 0.5 到 6，其余格子留空。Alt：一个线路盒子、一个标了字的质粒圆圈，以及比例列从 0.5 排到 6 的诱导表。不要画胶图、序列或元件编号，这一页没有这些材料。
-
-**2. 构建与诱导。** 构建好并诱导之后，一份培养就是一个细胞群。记录下来的是比例对时间的一段短而带噪声的轨迹，不是一个最终的数。本页的检查用 40 个细胞群，24 小时的比例落在十个目标之一附近。
-
-图。用 Figure 3。它已经是这一步的图：一个点是一个细胞群，灰线是十个目标。拍培养瓶不能看出比例。
-
-**3. 硬件测量。** 必须有东西把物理信号变成比例。这一块写出的计划读数器是酶标仪、成像和流式细胞术。See our Measurement page。本页写好的分析是色素混合测试：phyphox 的色相和饱和度，用该批次的全黄和全蓝缩放，再由一条逻辑斯蒂读成蓝色体积分数。See our Hardware page。
-
-图。用 Figure 16。在那些记录出现之前，不要画流式细胞仪或酶标仪。
-
-**4. 干实验分析。** 这里有两个问题，由两个工具分别回答。建模组推导了 BxB1 重组方程。时间查询拟合这个方程，再拟合残差，问一个细胞群何时达到目标比例。ML4OCRP 只学习分数对比例，同时给出预测分数和不确定性。曾经试过用一个网络做这两件事，两件都学不好，所以分开了。
-
-图。用 Figure 7。悬停时应指向两个读出，后验均值和 UCB，时间查询不要画进这张图。
-
-**5. 候选评分与筛选。** 分数是项目要最大化的量。它可以是对称单峰、偏的单峰、双峰、上升的 S 形或一条直线。后验均值指出预测分数最高的比例。UCB 是均值加上 β 乘标准差，β = 2，指出下一次要测的比例。在 24 小时的检查里，单峰和单调函数与真实最优相差不超过 0.03。双峰是松的那一个：预测比例 3.73，真实峰在 4.00，分数损失 0.21。
-
-图。五张拟合用 Figure 5。卡片若放得下误差汇总，再用 Figure 6。两张图都已经有了，新画一张只会重复。
-
-**6. 实验验证与设计迭代。** 第 5 步选出的比例是下一次实验，送回湿实验，作为又一次诱导或又一个要构建的细胞群。双峰这种松的结果说明的是下一步测哪里。本页停在这一轮之前，这里没有第二批数据。
-
-待画的图。把循环收成两块：评分与筛选把一个数，也就是 UCB 比例，交给湿实验那一块，湿实验那一块保持空白。Alt：一个箭头从评分与筛选指向湿实验，箭头上写着一个比例。不要画菌落，也不要画前后对比图。
-
-每个细胞群有一个编号。随时间记录成两张对齐的表：一张是细胞比例（`id`、`time`、`ratio`），一张是对应的实验分数（`id`、`time`、`score`）。比例是两种分化细胞的相对丰度。分数是要最大化的目标。
-
-在十个离散比例上查表，说不出已经测到的比例之间会发生什么，也说不出哪个还没测的比例最能降低不确定性。第一个模型试图在一个网络里同时学习两种关系。这没有成功：最优比例本身预测得很差，让同一个模型再兼顾比例如何随时间变化，效果同样不好。预测最优比例是主要任务，所以这两件事被分开。
+项目的测量方案能够获得多个细胞比例及其对应的实验分数，但这些数据只是少量离散点，无法直接判断未测比例的表现，也难以确定全局最佳比例。因此，我们开发了 ML4OCRP，让软件从已有的比例–分数数据中学习连续关系，预测最佳比例，并结合预测的不确定性推荐下一次实验应测的比例。它将有限的测量结果转化为下一轮实验的依据，帮助项目更有针对性地寻找使目标分数最高的细胞比例。此外，软件提供独立的时间查询功能，用于判断细胞群何时达到目标比例。
 
 - **OCRP** 只学习分数作为比例的函数。深度核高斯过程同时给出预测分数和不确定性，因此同一个模型既能指出预测的最优比例，也能推荐下一次实验。
 - **时间查询**是单独的。给定目标比例，它问每个细胞群：这个比例是已经出现过，还是会在以后出现，还是在搜索范围内到不了。当前的查询拟合建模组的 BxB1 重组常微分方程，并在其上再拟合一个残差。把这个机理模型和软件结合起来，从一开始就是目标；当前这个版本实现了它。
@@ -82,15 +48,29 @@ OCRP 预测一个可能还没被测到的比例的分数。
 
 ## 工作流（用流程图替换；悬停交互仍待实现）
 
-![七个脚本的流程图：从合成比例、预处理、训练、推荐、按细胞群的时间查询到常微分方程核对，每步旁边是写出的文件](figures/fig-02-ml4ocrp-pipeline.svg)
+![七个脚本的流程图：从合成比例、预处理、训练、推荐、按细胞群的时间查询到常微分方程核对，每步旁边是写出的文件](figures/ml4ocrp-pipeline.svg)
 
-**Figure 2.** 硅基核对从 24 小时的合成比例开始，经过训练和按细胞群的时间查询，再到预测时刻上的常微分方程比较。
+硅基核对从 24 小时的合成比例开始，经过训练和按细胞群的时间查询，再到预测时刻上的常微分方程比较。
+
+下面九张算法图是 上面流程图第 3 步到第 6 步里的伪代码。第 1 步 `fitting_ratio.py`、第 2 步 `fitting_score.py` 和第 7 步 `get_actual_ratio.py` 没有单独的算法图。
+
+| 流程图中的步骤 | 脚本 | 算法图 | 过程 |
+| --- | --- | --- | --- |
+| 3. 预处理 | `preprocess_data.py` | [algorithm-01-merge-tables-zh.png](figures/algorithm-01-merge-tables-zh.png) | `build_id_data_dict`，合并比例与分数表 |
+| 4. 训练 | `ocrp_model_train.py` | [algorithm-02-encode-ratio-zh.png](figures/algorithm-02-encode-ratio-zh.png) | `RatioFeatureEncoder`，编码一个比例 |
+| 4. 训练 | `ocrp_model_train.py` | [algorithm-03-pretrain-encoder-zh.png](figures/algorithm-03-pretrain-encoder-zh.png) | `pretrain_ratio_encoder`，预训练编码器 |
+| 4. 训练 | `ocrp_model_train.py` | [algorithm-04-build-gp-dataset-zh.png](figures/algorithm-04-build-gp-dataset-zh.png) | `build_global_dataset`，建立高斯过程数据集 |
+| 4. 训练 | `ocrp_model_train.py` | [algorithm-05-fit-gaussian-process-zh.png](figures/algorithm-05-fit-gaussian-process-zh.png) | `train_ocrp_model`，拟合深度核高斯过程 |
+| 5. 推荐 | `predict_ratio_and_recommend_by_ucb.py` | [algorithm-06-predict-optimal-ratio-zh.png](figures/algorithm-06-predict-optimal-ratio-zh.png) | `predict_optimal_ratio`，预测最优比例 |
+| 5. 推荐 | `predict_ratio_and_recommend_by_ucb.py` | [algorithm-07-recommend-next-ratio-zh.png](figures/algorithm-07-recommend-next-ratio-zh.png) | `ucb_acquisition`，推荐下一个比例 |
+| 6. 时间查询 | `query_per_id.py` | [algorithm-08-fit-cell-group-zh.png](figures/algorithm-08-fit-cell-group-zh.png) | `RatioTimePredictor.fit_id`，拟合一个细胞群 |
+| 6. 时间查询 | `query_per_id.py` | [algorithm-09-query-time-zh.png](figures/algorithm-09-query-time-zh.png) | `RatioTimePredictor.query`，查询达到目标比例的时间 |
 
 合成比例表里，细胞群的数量多于目标比例的数量。每个细胞群在 24 小时的比例落在十个值附近，这些值从 0.5 到 6 对数间隔。然后由 `fitting_score.py` 给这些比例打分。不同打分函数的对比见[打分函数形状](#打分函数形状)。
 
-![散点图：横轴是细胞群编号，纵轴是 24 小时的比例，40 个点，灰线是十个目标比例](figures/fig-03-ratio-targets-zh.svg)
+![散点图：横轴是细胞群编号，纵轴是 24 小时的比例，40 个点，灰线是十个目标比例](figures/fig-01-ratio-targets-zh.svg)
 
-**Figure 3.** 每个细胞群在 24 小时的比例落在十个目标之一附近，目标从 0.5 到 6 对数间隔。
+**Figure 1.** 每个细胞群在 24 小时的比例落在十个目标之一附近，目标从 0.5 到 6 对数间隔。
 
 ## 打分函数形状
 
@@ -104,9 +84,9 @@ OCRP 预测一个可能还没被测到的比例的分数。
 | `sigmoid` | 递增的 S 形，中点为 `--opt_ratio` | `max_score / (1 + exp(-(ratio - opt_ratio) / sigma))` |
 | `linear` | 直线上升 | `--linear_min` 处为 0，`--linear_max` 处为 `--max_score`，区间外截断 |
 
-![折线图：比例从 0.5 到 6，五条曲线分别是对称单峰、不对称单峰、双峰、递增 S 形和直线](figures/fig-04-score-shapes-zh.svg)
+![折线图：比例从 0.5 到 6，五条曲线分别是对称单峰、不对称单峰、双峰、递增 S 形和直线](figures/fig-02-score-shapes-zh.svg)
 
-**Figure 4.** 同一次检查用五种形状给同一批比例打分：两个单峰、一个双峰、一条递增 S 形和一条直线。
+**Figure 2.** 同一次检查用五种形状给同一批比例打分：两个单峰、一个双峰、一条递增 S 形和一条直线。
 
 `test_score_shapes.py` 生成一份比例表（40 个细胞群，24 小时的比例落在十个默认目标附近，种子 0），再用每种函数打分。然后按默认日程训练 OCRP：预训练 100 轮，高斯过程 200 轮，种子 0。预测的最优比例是在 `[0.5, 6]` 上最大化后验均值，区间与目标比例相同。分数损失是真实函数在真实最优点的分数减去在预测比例上的分数。分数 RMSE 比较的是后验均值和这个区间上的真实打分函数。
 
@@ -120,19 +100,19 @@ OCRP 预测一个可能还没被测到的比例的分数。
 
 对称单峰、不对称单峰、sigmoid 和线性上升与真实最优相差不超过 0.03，分数损失不超过 0.0004。双峰更松：预测比例是 3.73，较高的峰在 4.00，分数损失为 0.21。同一次拟合的 UCB 推荐是 3.72。
 
-![五张小图，每张叠着黑色真实打分曲线、蓝色 OCRP 后验均值、粉色训练点和标出真实最优与预测最优的虚线](figures/fig-05-score-shape-fit-zh.svg)
+![五张小图，每张叠着黑色真实打分曲线、蓝色 OCRP 后验均值、粉色训练点和标出真实最优与预测最优的虚线](figures/fig-03-score-shape-fit-zh.svg)
 
-**Figure 5.** 单峰和单调函数被收回来了。双峰是松的那一个：预测比例 3.73，较高的峰在 4.00。
+**Figure 3.** 单峰和单调函数被收回来了。双峰是松的那一个：预测比例 3.73，较高的峰在 4.00。
 
-![两张条形图：五种打分函数的绝对误差和分数损失](figures/fig-06-score-shape-performance-zh.svg)
+![两张条形图：五种打分函数的绝对误差和分数损失](figures/fig-04-score-shape-performance-zh.svg)
 
-**Figure 6.** 除双峰外，绝对误差都在 0.03 以内。双峰的分数损失是 0.21。
+**Figure 4.** 除双峰外，绝对误差都在 0.03 以内。双峰的分数损失是 0.21。
 
 ## 架构（用架构图替换；悬停交互仍待实现）
 
-![结构图：冻结的比例编码器送入深度核高斯过程，虚线是辅助分数头，旁边是均值和 UCB 两个读出](figures/fig-07-ocrp-architecture.svg)
+![结构图：冻结的比例编码器送入深度核高斯过程，虚线是辅助分数头，旁边是均值和 UCB 两个读出](figures/ocrp-architecture.svg)
 
-**Figure 7.** 预训练之后，高斯过程读的是原始比例和冻结嵌入的拼接。均值和 UCB 是同一个后验的两种读法。
+预训练之后，高斯过程读的是原始比例和冻结嵌入的拼接。均值和 UCB 是同一个后验的两种读法。
 
 ## 环境依赖
 
@@ -156,6 +136,8 @@ OCRP 预测一个可能还没被测到的比例的分数。
 省略 `--device` 时，训练和按细胞群查询依次选择 MPS、CUDA、CPU。比例推荐依次选择 CUDA、CPU。
 
 ## 如何使用
+
+ML4OCRP 的源代码在 <https://gitlab.igem.org/2026/software/shanghaitech-china/ml4ocrp>。
 
 在 Unix shell 中运行整条流程前，先改 `Val.sh` 顶部的 `PROJECT_ROOT`。它会激活 `ocrp`，并用默认参数跑完七步。不额外传入可选参数时，数值默认值和输出路径保持不变。
 
@@ -189,43 +171,43 @@ streamlit run app.py
 
 1. **预处理。** 上传两份 CSV，指定本地文件，或加载已有的 `id_data_dict.npy`。合并成功后，所有比例–分数对画在一张散点图上，横轴是比例，纵轴是分数。
 
-   ![预处理页的截图：数据来源选项、保存路径和 CSV 上传](figures/fig-08-preprocess-tab.png)
+   ![预处理页的截图：数据来源选项、保存路径和 CSV 上传](figures/fig-05-preprocess-tab.png)
 
-   **Figure 8.** 预处理页接收比例表和分数表，或者一份已有的 `id_data_dict.npy`。
+   **Figure 5.** 预处理页接收比例表和分数表，或者一份已有的 `id_data_dict.npy`。
 
-   ![数据表旁边的散点图，横轴是比例，纵轴是分数](figures/fig-09-preprocess-scatter.png)
+   ![数据表旁边的散点图，横轴是比例，纵轴是分数](figures/fig-06-preprocess-scatter.png)
 
-   **Figure 9.** 合并之后，每一对比例和分数都画出来，横轴是比例，纵轴是分数。
+   **Figure 6.** 合并之后，每一对比例和分数都画出来，横轴是比例，纵轴是分数。
 
 2. **训练。** 拟合编码器和深度核高斯过程。页面上可以设置宽度、预训练、验证集比例和边际似然的归约方式。
 
-   ![训练页的截图：宽度、预训练、验证集比例和边际似然的选项](figures/fig-10-train-tab.png)
+   ![训练页的截图：宽度、预训练、验证集比例和边际似然的选项](figures/fig-07-train-tab.png)
 
-   **Figure 10.** 训练用的编码器和深度核高斯过程与命令行相同。
+   **Figure 7.** 训练用的编码器和深度核高斯过程与命令行相同。
 
-   ![训练日志的截图，末尾是检查点已保存](figures/fig-11-train-log.png)
+   ![训练日志的截图，末尾是检查点已保存](figures/fig-08-train-log.png)
 
-   **Figure 11.** 跑完会写出 `OCRP_model.pth`。`hidden_dim` 保持 32 时，命令行脚本可以读这份检查点。
+   **Figure 8.** 跑完会写出 `OCRP_model.pth`。`hidden_dim` 保持 32 时，命令行脚本可以读这份检查点。
 
 3. **推荐。** 加载 `OCRP_model.pth`，报告使预测分数最大的比例，并报告 UCB 推荐。页面同时画出均值、标准差和 UCB 对比例的曲线。
 
-   ![推荐页的截图：搜索边界、起点个数和 UCB 系数](figures/fig-12-recommend-tab.png)
+   ![推荐页的截图：搜索边界、起点个数和 UCB 系数](figures/fig-09-recommend-tab.png)
 
-   **Figure 12.** 推荐在后验均值上找最优比例，并在网格上计算 UCB。
+   **Figure 9.** 推荐在后验均值上找最优比例，并在网格上计算 UCB。
 
-   ![结果截图：报出的最优比例和预测分数，以及均值、标准差和 UCB 对比例的曲线](figures/fig-13-recommend-curves.png)
+   ![结果截图：报出的最优比例和预测分数，以及均值、标准差和 UCB 对比例的曲线](figures/fig-10-recommend-curves.png)
 
-   **Figure 13.** 画出的均值是预测分数。UCB 曲线是均值加上 β 乘标准差，标出下一次要采样的比例。
+   **Figure 10.** 画出的均值是预测分数。UCB 曲线是均值加上 β 乘标准差，标出下一次要采样的比例。
 
 4. **查询。** 对推荐的比例，或对你输入的比例，拟合每个细胞群并返回时间和状态。这一页一次处理一个群，以便进度条更新。它不启动 `query_per_id.py` 所用的进程池。
 
-   ![查询页的截图：目标比例、容差、常微分方程拟合选项和进度条](figures/fig-14-query-tab.png)
+   ![查询页的截图：目标比例、容差、常微分方程拟合选项和进度条](figures/fig-11-query-tab.png)
 
-   **Figure 14.** 查询一次处理一个细胞群，页面才能显示进度。它不启动命令行用的进程池。
+   **Figure 11.** 查询一次处理一个细胞群，页面才能显示进度。它不启动命令行用的进程池。
 
-   ![查询结果的截图：汇总计数、每个细胞群的状态表，以及预测时间的条形图](figures/fig-15-query-results.png)
+   ![查询结果的截图：汇总计数、每个细胞群的状态表，以及预测时间的条形图](figures/fig-12-query-results.png)
 
-   **Figure 15.** 每个细胞群返回一个时间和一个状态：已经出现、预测在未来，或没有达到。
+   **Figure 12.** 每个细胞群返回一个时间和一个状态：已经出现、预测在未来，或没有达到。
 
 # Hardware
 
@@ -308,9 +290,9 @@ python scripts/fit_model.py
 
 ## 工作流与架构（用流程图替换；悬停交互仍待实现）
 
-![流程图：从 setting CSV 和 phyphox Excel 经阶段特征，到一条共用逻辑斯蒂和它的图](figures/fig-16-hardware-pipeline-zh.svg)
+![流程图：从 setting CSV 和 phyphox Excel 经阶段特征，到一条共用逻辑斯蒂和它的图](figures/hardware-pipeline-zh.svg)
 
-**Figure 16.** 两组 phyphox 实验的阶段特征先用各自的全黄和全蓝缩放，再拟合一条逻辑斯蒂。
+两组 phyphox 实验的阶段特征先用各自的全黄和全蓝缩放，再拟合一条逻辑斯蒂。
 
 ## 环境依赖
 
@@ -391,27 +373,27 @@ RMSE 0.118 大约是蓝色体积分数的十二个百分点。这次拟合的最
 
 蓝圆是实验 1，橙三角是实验 2。
 
-![散点图：预测的蓝色体积分数对配制分数，红线是完全一致，蓝圆是实验 1，橙三角是实验 2](figures/fig-17-predicted-vs-prepared.png)
+![散点图：预测的蓝色体积分数对配制分数，红线是完全一致，蓝圆是实验 1，橙三角是实验 2](figures/fig-13-predicted-vs-prepared.png)
 
-**Figure 17.** 预测分数对配制分数（n = 63）。落在红线上的点与共用曲线一致。实验 1 散得更开，与它 0.142 的 RMSE 相符。
+**Figure 13.** 预测分数对配制分数（n = 63）。落在红线上的点与共用曲线一致。实验 1 散得更开，与它 0.142 的 RMSE 相符。
 
-![三维曲面：归一化色相和饱和度上的共用逻辑斯蒂，蓝圆是实验 1，橙三角是实验 2](figures/fig-18-logistic-surface.png)
+![三维曲面：归一化色相和饱和度上的共用逻辑斯蒂，蓝圆是实验 1，橙三角是实验 2](figures/fig-14-logistic-surface.png)
 
-**Figure 18.** `z_hue` 和 `z_saturation` 上的共用逻辑斯蒂。实验 2 在黄端和蓝端之间。实验 1 伸到 `z_hue = 0` 以下，因为它第 2 阶段的全黄不是这一系列里最黄的点。
+**Figure 14.** `z_hue` 和 `z_saturation` 上的共用逻辑斯蒂。实验 2 在黄端和蓝端之间。实验 1 伸到 `z_hue = 0` 以下，因为它第 2 阶段的全黄不是这一系列里最黄的点。
 
-![残差直方图，正侧的尾巴更长。残差是拟合比例减去实测比例](figures/fig-19-residual-histogram.png)
+![残差直方图，正侧的尾巴更长。残差是拟合比例减去实测比例](figures/fig-15-residual-histogram.png)
 
-**Figure 19.** 残差大多在 ±0.2 以内。正侧更长的尾巴表示有些样品被估高了。残差偏度是 0.57。
+**Figure 15.** 残差大多在 ±0.2 以内。正侧更长的尾巴表示有些样品被估高了。残差偏度是 0.57。
 
-![散点图：残差对拟合的蓝色体积分数，蓝圆是实验 1，橙三角是实验 2](figures/fig-20-residual-vs-fitted.png)
+![散点图：残差对拟合的蓝色体积分数，蓝圆是实验 1，橙三角是实验 2](figures/fig-16-residual-vs-fitted.png)
 
-**Figure 20.** 从低拟合分数到高拟合分数，残差都围着 0，没有明显的喇叭形。
+**Figure 16.** 从低拟合分数到高拟合分数，残差都围着 0，没有明显的喇叭形。
 
-![残差的正态 QQ 图，上尾偏离参考线](figures/fig-21-residual-qq.png)
+![残差的正态 QQ 图，上尾偏离参考线](figures/fig-17-residual-qq.png)
 
-**Figure 21.** 正态 QQ 图和直方图一样有轻微右偏：上尾离开参考线。峰度是 −0.33。
+**Figure 17.** 正态 QQ 图和直方图一样有轻微右偏：上尾离开参考线。峰度是 −0.33。
 
-# iHP
+# Desktiny
 
 ## 为什么做 Desktiny
 
